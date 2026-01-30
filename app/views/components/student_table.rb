@@ -2,6 +2,7 @@
 require 'fox16'
 include Fox
 require_relative '../../core/observable'
+require_relative '../../models/student_short'  # Добавляем
 
 class StudentTable < FXTable
   include Observable
@@ -20,7 +21,7 @@ class StudentTable < FXTable
     setup_event_handlers
   end
   
-  def update_table(data_list)
+  def update_table(data_list, sort_info = nil)
     return unless data_list
     
     data_table = data_list.get_data
@@ -30,8 +31,14 @@ class StudentTable < FXTable
     setTableSize(data_table.rows_count, data_table.columns_count)
     
     column_names = data_list.get_names  
+    
+    # Обновляем заголовки с индикацией сортировки
     column_names.each_with_index do |name, col|
-      setColumnText(col, name)
+      header_text = name
+      if sort_info && sort_info[:column] == col
+        header_text += sort_info[:direction] == :asc ? " ▲" : " ▼"
+      end
+      setColumnText(col, header_text)
     end
     
     (0...data_table.rows_count).each do |row|
@@ -55,8 +62,13 @@ class StudentTable < FXTable
     selected
   end
   
+  def get_student_id_at_row(row)
+    return unless row >= 0 && row < numRows
+    getItemText(row, 0).to_i
+  end
+  
   def selected_student_ids
-    selected_rows.map { |row| getItemText(row, 0).to_i }
+    selected_rows.map { |row| get_student_id_at_row(row) }
   end
   
   private

@@ -1,23 +1,143 @@
 [
   {
-    "id": 1,
-    "first_name": "Иван",
-    "last_name": "Иванов",
-    "patronymic": "Иванович",
-    "git": "https://github.com/user0",
-    "phone": "+79161234567",
-    "telegram": "@student00000",
-    "email": "student0@mail.ru"
+    "id": 29,
+    "first_name": "Дмитрий",
+    "last_name": "Федоров",
+    "patronymic": "Дмитриевна",
+    "git": "https://github.com/user28",
+    "phone": "+7-916-123-45-67",
+    "telegram": "@student00028",
+    "email": null
   },
   {
-    "id": 2,
-    "first_name": "Петр",
-    "last_name": "Петров",
-    "patronymic": "Петрович",
-    "git": "https://gitlab.com/dev1",
+    "id": 39,
+    "first_name": "Дмитрий",
+    "last_name": "Федоров",
+    "patronymic": "Дмитриевна",
+    "git": null,
+    "phone": "+7 916 123-45-67",
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 19,
+    "first_name": "Дмитрий",
+    "last_name": "Федоров",
+    "patronymic": "Дмитриевна",
+    "git": null,
+    "phone": "+79161234567",
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 9,
+    "first_name": "Дмитрий",
+    "last_name": "Федоров",
+    "patronymic": "Дмитриевна",
+    "git": "https://github.com/user8",
+    "phone": "+7 916 123-45-67",
+    "telegram": "@dev00008",
+    "email": null
+  },
+  {
+    "id": 48,
+    "first_name": "Поиск",
+    "last_name": "Тестовый",
+    "patronymic": "Искомый",
+    "git": "https://gitlab.com/search/test",
+    "phone": "8(916)999-88-77",
+    "telegram": "@searchme56789",
+    "email": "search@test.ru"
+  },
+  {
+    "id": 24,
+    "first_name": "Анна",
+    "last_name": "Смирнов",
+    "patronymic": "Александрович",
+    "git": "https://github.com/projects/repo23",
+    "phone": null,
+    "telegram": "@coder0023",
+    "email": null
+  },
+  {
+    "id": 14,
+    "first_name": "Анна",
+    "last_name": "Смирнов",
+    "patronymic": "Александрович",
+    "git": "https://gitlab.com/dev13",
     "phone": "89161234567",
-    "telegram": "@dev00001",
-    "email": "user1@gmail.com"
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 34,
+    "first_name": "Анна",
+    "last_name": "Смирнов",
+    "patronymic": "Александрович",
+    "git": "https://gitlab.com/dev33",
+    "phone": "8(916)123-45-67",
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 4,
+    "first_name": "Анна",
+    "last_name": "Смирнов",
+    "patronymic": "Александрович",
+    "git": "https://github.com/projects/repo3",
+    "phone": "8(916)123-45-67",
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 44,
+    "first_name": "Анна",
+    "last_name": "Смирнов",
+    "patronymic": "Александрович",
+    "git": "https://github.com/projects/repo43",
+    "phone": "89161234567",
+    "telegram": "@dev00043",
+    "email": null
+  },
+  {
+    "id": 33,
+    "first_name": "Мария",
+    "last_name": "Сидоров",
+    "patronymic": "Сергеевич",
+    "git": "https://github.com/user32",
+    "phone": "+7 916 123-45-67",
+    "telegram": null,
+    "email": "test32@yandex.ru"
+  },
+  {
+    "id": 13,
+    "first_name": "Мария",
+    "last_name": "Сидоров",
+    "patronymic": "Сергеевич",
+    "git": "https://github.com/user12",
+    "phone": "+79161234567",
+    "telegram": null,
+    "email": "test12@yandex.ru"
+  },
+  {
+    "id": 43,
+    "first_name": "Мария",
+    "last_name": "Сидоров",
+    "patronymic": "Сергеевич",
+    "git": null,
+    "phone": "+79161234567",
+    "telegram": "@student00042",
+    "email": "test42@yandex.ru"
+  },
+  {
+    "id": 23,
+    "first_name": "Мария",
+    "last_name": "Сидоров",
+    "patronymic": "Сергеевич",
+    "git": null,
+    "phone": "+7-916-123-45-67",
+    "telegram": "@dev00022",
+    "email": "test22@yandex.ru"
   },
   {
     "id": 3,
@@ -30,11 +150,171 @@
     "email": "test2@yandex.ru"
   },
   {
-    "id": 4,
-    "first_name": "Анна",
-    "last_name": "Смирнов",
-    "patronymic": "Александрович",
-    "git": "https://github.com/projects/repo3",
+    "id": 36,
+    "first_name": "Ольга",
+    "last_name": "Попов",
+    "patronymic": "Алексеевна",
+    "git": "https://github.com/projects/repo35",
+    "phone": null,
+    "telegram": "@student00035",
+    "email": "student35@mail.ru"
+  },
+  {
+    "id": 26,
+    "first_name": "Ольга",
+    "last_name": "Попов",
+    "patronymic": "Алексеевна",
+    "git": "https://gitlab.com/dev25",
+    "phone": "89161234567",
+    "telegram": null,
+    "email": "student25@mail.ru"
+  },
+  {
+    "id": 6,
+    "first_name": "Ольга",
+    "last_name": "Попов",
+    "patronymic": "Алексеевна",
+    "git": "https://gitlab.com/dev5",
+    "phone": null,
+    "telegram": null,
+    "email": "student5@mail.ru"
+  },
+  {
+    "id": 16,
+    "first_name": "Ольга",
+    "last_name": "Попов",
+    "patronymic": "Алексеевна",
+    "git": "https://github.com/projects/repo15",
+    "phone": "8(916)123-45-67",
+    "telegram": "@dev00015",
+    "email": "student15@mail.ru"
+  },
+  {
+    "id": 42,
+    "first_name": "Петр",
+    "last_name": "Петров",
+    "patronymic": "Петрович",
+    "git": "https://gitlab.com/dev41",
+    "phone": null,
+    "telegram": null,
+    "email": "user41@gmail.com"
+  },
+  {
+    "id": 22,
+    "first_name": "Петр",
+    "last_name": "Петров",
+    "patronymic": "Петрович",
+    "git": "https://gitlab.com/dev21",
+    "phone": "8(916)123-45-67",
+    "telegram": "@student00021",
+    "email": "user21@gmail.com"
+  },
+  {
+    "id": 32,
+    "first_name": "Петр",
+    "last_name": "Петров",
+    "patronymic": "Петрович",
+    "git": "https://github.com/projects/repo31",
+    "phone": "89161234567",
+    "telegram": null,
+    "email": "user31@gmail.com"
+  },
+  {
+    "id": 12,
+    "first_name": "Петр",
+    "last_name": "Петров",
+    "patronymic": "Петрович",
+    "git": "https://github.com/projects/repo11",
+    "phone": null,
+    "telegram": null,
+    "email": "user11@gmail.com"
+  },
+  {
+    "id": 2,
+    "first_name": "Петр",
+    "last_name": "Петров",
+    "patronymic": "Петрович",
+    "git": "https://gitlab.com/dev1",
+    "phone": "89161234567",
+    "telegram": "@dev00001",
+    "email": "user1@gmail.com"
+  },
+  {
+    "id": 18,
+    "first_name": "Екатерина",
+    "last_name": "Новиков",
+    "patronymic": "Александровна",
+    "git": "https://gitlab.com/dev17",
+    "phone": null,
+    "telegram": null,
+    "email": "test17@yandex.ru"
+  },
+  {
+    "id": 38,
+    "first_name": "Екатерина",
+    "last_name": "Новиков",
+    "patronymic": "Александровна",
+    "git": "https://gitlab.com/dev37",
+    "phone": "89161234567",
+    "telegram": "@coder0037",
+    "email": "test37@yandex.ru"
+  },
+  {
+    "id": 28,
+    "first_name": "Екатерина",
+    "last_name": "Новиков",
+    "patronymic": "Александровна",
+    "git": "https://github.com/projects/repo27",
+    "phone": "8(916)123-45-67",
+    "telegram": null,
+    "email": "test27@yandex.ru"
+  },
+  {
+    "id": 8,
+    "first_name": "Екатерина",
+    "last_name": "Новиков",
+    "patronymic": "Александровна",
+    "git": "https://github.com/projects/repo7",
+    "phone": "89161234567",
+    "telegram": "@student00007",
+    "email": "test7@yandex.ru"
+  },
+  {
+    "id": 20,
+    "first_name": "Наталья",
+    "last_name": "Морозов",
+    "patronymic": "Владимировна",
+    "git": "https://github.com/projects/repo19",
+    "phone": "89161234567",
+    "telegram": null,
+    "email": null
+  },
+  {
+    "id": 30,
+    "first_name": "Наталья",
+    "last_name": "Морозов",
+    "patronymic": "Владимировна",
+    "git": "https://gitlab.com/dev29",
+    "phone": null,
+    "telegram": "@dev00029",
+    "email": null
+  },
+  {
+    "id": 10,
+    "first_name": "Наталья",
+    "last_name": "Морозов",
+    "patronymic": "Владимировна",
+    "git": "https://gitlab.com/dev9",
+    "phone": "8(916)123-45-67",
+    "telegram": "@coder0009",
+    "email": null
+  },
+  {
+    "id": 40,
+    "first_name": "Наталья",
+    "last_name": "Морозов",
+    "patronymic": "Владимировна",
+    "git": "https://github.com/projects/repo39",
     "phone": "8(916)123-45-67",
     "telegram": null,
     "email": null
@@ -50,292 +330,12 @@
     "email": null
   },
   {
-    "id": 6,
-    "first_name": "Ольга",
-    "last_name": "Попов",
-    "patronymic": "Алексеевна",
-    "git": "https://gitlab.com/dev5",
-    "phone": null,
-    "telegram": null,
-    "email": "student5@mail.ru"
-  },
-  {
-    "id": 7,
-    "first_name": "Алексей",
-    "last_name": "Васильев",
-    "patronymic": "Сергеевна",
-    "git": null,
-    "phone": "+79161234567",
-    "telegram": null,
-    "email": "user6@gmail.com"
-  },
-  {
-    "id": 8,
-    "first_name": "Екатерина",
-    "last_name": "Новиков",
-    "patronymic": "Александровна",
-    "git": "https://github.com/projects/repo7",
-    "phone": "89161234567",
-    "telegram": "@student00007",
-    "email": "test7@yandex.ru"
-  },
-  {
-    "id": 9,
-    "first_name": "Дмитрий",
-    "last_name": "Федоров",
-    "patronymic": "Дмитриевна",
-    "git": "https://github.com/user8",
-    "phone": "+7 916 123-45-67",
-    "telegram": "@dev00008",
-    "email": null
-  },
-  {
-    "id": 10,
-    "first_name": "Наталья",
-    "last_name": "Морозов",
-    "patronymic": "Владимировна",
-    "git": "https://gitlab.com/dev9",
-    "phone": "8(916)123-45-67",
-    "telegram": "@coder0009",
-    "email": null
-  },
-  {
-    "id": 11,
-    "first_name": "Иван",
-    "last_name": "Иванов",
-    "patronymic": "Иванович",
-    "git": null,
-    "phone": "+7-916-123-45-67",
-    "telegram": null,
-    "email": "student10@mail.ru"
-  },
-  {
-    "id": 12,
-    "first_name": "Петр",
-    "last_name": "Петров",
-    "patronymic": "Петрович",
-    "git": "https://github.com/projects/repo11",
-    "phone": null,
-    "telegram": null,
-    "email": "user11@gmail.com"
-  },
-  {
-    "id": 13,
-    "first_name": "Мария",
-    "last_name": "Сидоров",
-    "patronymic": "Сергеевич",
-    "git": "https://github.com/user12",
-    "phone": "+79161234567",
-    "telegram": null,
-    "email": "test12@yandex.ru"
-  },
-  {
-    "id": 14,
-    "first_name": "Анна",
-    "last_name": "Смирнов",
-    "patronymic": "Александрович",
-    "git": "https://gitlab.com/dev13",
-    "phone": "89161234567",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 15,
-    "first_name": "Сергей",
-    "last_name": "Кузнецов",
-    "patronymic": "Дмитриевич",
-    "git": null,
-    "phone": "+7 916 123-45-67",
-    "telegram": "@student00014",
-    "email": null
-  },
-  {
-    "id": 16,
-    "first_name": "Ольга",
-    "last_name": "Попов",
-    "patronymic": "Алексеевна",
-    "git": "https://github.com/projects/repo15",
-    "phone": "8(916)123-45-67",
-    "telegram": "@dev00015",
-    "email": "student15@mail.ru"
-  },
-  {
-    "id": 17,
-    "first_name": "Алексей",
-    "last_name": "Васильев",
-    "patronymic": "Сергеевна",
-    "git": "https://github.com/user16",
-    "phone": "+7-916-123-45-67",
-    "telegram": "@coder0016",
-    "email": "user16@gmail.com"
-  },
-  {
-    "id": 18,
-    "first_name": "Екатерина",
-    "last_name": "Новиков",
-    "patronymic": "Александровна",
-    "git": "https://gitlab.com/dev17",
-    "phone": null,
-    "telegram": null,
-    "email": "test17@yandex.ru"
-  },
-  {
-    "id": 19,
-    "first_name": "Дмитрий",
-    "last_name": "Федоров",
-    "patronymic": "Дмитриевна",
-    "git": null,
-    "phone": "+79161234567",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 20,
-    "first_name": "Наталья",
-    "last_name": "Морозов",
-    "patronymic": "Владимировна",
-    "git": "https://github.com/projects/repo19",
-    "phone": "89161234567",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 21,
-    "first_name": "Иван",
-    "last_name": "Иванов",
-    "patronymic": "Иванович",
-    "git": "https://github.com/user20",
-    "phone": "+7 916 123-45-67",
-    "telegram": null,
-    "email": "student20@mail.ru"
-  },
-  {
-    "id": 22,
-    "first_name": "Петр",
-    "last_name": "Петров",
-    "patronymic": "Петрович",
-    "git": "https://gitlab.com/dev21",
-    "phone": "8(916)123-45-67",
-    "telegram": "@student00021",
-    "email": "user21@gmail.com"
-  },
-  {
-    "id": 23,
-    "first_name": "Мария",
-    "last_name": "Сидоров",
-    "patronymic": "Сергеевич",
-    "git": null,
-    "phone": "+7-916-123-45-67",
-    "telegram": "@dev00022",
-    "email": "test22@yandex.ru"
-  },
-  {
-    "id": 24,
-    "first_name": "Анна",
-    "last_name": "Смирнов",
-    "patronymic": "Александрович",
-    "git": "https://github.com/projects/repo23",
-    "phone": null,
-    "telegram": "@coder0023",
-    "email": null
-  },
-  {
     "id": 25,
     "first_name": "Сергей",
     "last_name": "Кузнецов",
     "patronymic": "Дмитриевич",
     "git": "https://github.com/user24",
     "phone": "+79161234567",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 26,
-    "first_name": "Ольга",
-    "last_name": "Попов",
-    "patronymic": "Алексеевна",
-    "git": "https://gitlab.com/dev25",
-    "phone": "89161234567",
-    "telegram": null,
-    "email": "student25@mail.ru"
-  },
-  {
-    "id": 27,
-    "first_name": "Алексей",
-    "last_name": "Васильев",
-    "patronymic": "Сергеевна",
-    "git": null,
-    "phone": "+7 916 123-45-67",
-    "telegram": null,
-    "email": "user26@gmail.com"
-  },
-  {
-    "id": 28,
-    "first_name": "Екатерина",
-    "last_name": "Новиков",
-    "patronymic": "Александровна",
-    "git": "https://github.com/projects/repo27",
-    "phone": "8(916)123-45-67",
-    "telegram": null,
-    "email": "test27@yandex.ru"
-  },
-  {
-    "id": 29,
-    "first_name": "Дмитрий",
-    "last_name": "Федоров",
-    "patronymic": "Дмитриевна",
-    "git": "https://github.com/user28",
-    "phone": "+7-916-123-45-67",
-    "telegram": "@student00028",
-    "email": null
-  },
-  {
-    "id": 30,
-    "first_name": "Наталья",
-    "last_name": "Морозов",
-    "patronymic": "Владимировна",
-    "git": "https://gitlab.com/dev29",
-    "phone": null,
-    "telegram": "@dev00029",
-    "email": null
-  },
-  {
-    "id": 31,
-    "first_name": "Иван",
-    "last_name": "Иванов",
-    "patronymic": "Иванович",
-    "git": null,
-    "phone": "+79161234567",
-    "telegram": "@coder0030",
-    "email": "student30@mail.ru"
-  },
-  {
-    "id": 32,
-    "first_name": "Петр",
-    "last_name": "Петров",
-    "patronymic": "Петрович",
-    "git": "https://github.com/projects/repo31",
-    "phone": "89161234567",
-    "telegram": null,
-    "email": "user31@gmail.com"
-  },
-  {
-    "id": 33,
-    "first_name": "Мария",
-    "last_name": "Сидоров",
-    "patronymic": "Сергеевич",
-    "git": "https://github.com/user32",
-    "phone": "+7 916 123-45-67",
-    "telegram": null,
-    "email": "test32@yandex.ru"
-  },
-  {
-    "id": 34,
-    "first_name": "Анна",
-    "last_name": "Смирнов",
-    "patronymic": "Александрович",
-    "git": "https://gitlab.com/dev33",
-    "phone": "8(916)123-45-67",
     "telegram": null,
     "email": null
   },
@@ -350,96 +350,6 @@
     "email": null
   },
   {
-    "id": 36,
-    "first_name": "Ольга",
-    "last_name": "Попов",
-    "patronymic": "Алексеевна",
-    "git": "https://github.com/projects/repo35",
-    "phone": null,
-    "telegram": "@student00035",
-    "email": "student35@mail.ru"
-  },
-  {
-    "id": 37,
-    "first_name": "Алексей",
-    "last_name": "Васильев",
-    "patronymic": "Сергеевна",
-    "git": "https://github.com/user36",
-    "phone": "+79161234567",
-    "telegram": "@dev00036",
-    "email": "user36@gmail.com"
-  },
-  {
-    "id": 38,
-    "first_name": "Екатерина",
-    "last_name": "Новиков",
-    "patronymic": "Александровна",
-    "git": "https://gitlab.com/dev37",
-    "phone": "89161234567",
-    "telegram": "@coder0037",
-    "email": "test37@yandex.ru"
-  },
-  {
-    "id": 39,
-    "first_name": "Дмитрий",
-    "last_name": "Федоров",
-    "patronymic": "Дмитриевна",
-    "git": null,
-    "phone": "+7 916 123-45-67",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 40,
-    "first_name": "Наталья",
-    "last_name": "Морозов",
-    "patronymic": "Владимировна",
-    "git": "https://github.com/projects/repo39",
-    "phone": "8(916)123-45-67",
-    "telegram": null,
-    "email": null
-  },
-  {
-    "id": 41,
-    "first_name": "Иван",
-    "last_name": "Иванов",
-    "patronymic": "Иванович",
-    "git": "https://github.com/user40",
-    "phone": "+7-916-123-45-67",
-    "telegram": null,
-    "email": "student40@mail.ru"
-  },
-  {
-    "id": 42,
-    "first_name": "Петр",
-    "last_name": "Петров",
-    "patronymic": "Петрович",
-    "git": "https://gitlab.com/dev41",
-    "phone": null,
-    "telegram": null,
-    "email": "user41@gmail.com"
-  },
-  {
-    "id": 43,
-    "first_name": "Мария",
-    "last_name": "Сидоров",
-    "patronymic": "Сергеевич",
-    "git": null,
-    "phone": "+79161234567",
-    "telegram": "@student00042",
-    "email": "test42@yandex.ru"
-  },
-  {
-    "id": 44,
-    "first_name": "Анна",
-    "last_name": "Смирнов",
-    "patronymic": "Александрович",
-    "git": "https://github.com/projects/repo43",
-    "phone": "89161234567",
-    "telegram": "@dev00043",
-    "email": null
-  },
-  {
     "id": 45,
     "first_name": "Сергей",
     "last_name": "Кузнецов",
@@ -447,6 +357,16 @@
     "git": "https://github.com/user44",
     "phone": "+7 916 123-45-67",
     "telegram": "@coder0044",
+    "email": null
+  },
+  {
+    "id": 15,
+    "first_name": "Сергей",
+    "last_name": "Кузнецов",
+    "patronymic": "Дмитриевич",
+    "git": null,
+    "phone": "+7 916 123-45-67",
+    "telegram": "@student00014",
     "email": null
   },
   {
@@ -460,6 +380,56 @@
     "email": null
   },
   {
+    "id": 21,
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "patronymic": "Иванович",
+    "git": "https://github.com/user20",
+    "phone": "+7 916 123-45-67",
+    "telegram": null,
+    "email": "student20@mail.ru"
+  },
+  {
+    "id": 11,
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "patronymic": "Иванович",
+    "git": null,
+    "phone": "+7-916-123-45-67",
+    "telegram": null,
+    "email": "student10@mail.ru"
+  },
+  {
+    "id": 31,
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "patronymic": "Иванович",
+    "git": null,
+    "phone": "+79161234567",
+    "telegram": "@coder0030",
+    "email": "student30@mail.ru"
+  },
+  {
+    "id": 1,
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "patronymic": "Иванович",
+    "git": "https://github.com/user0",
+    "phone": "+79161234567",
+    "telegram": "@student00000",
+    "email": "student0@mail.ru"
+  },
+  {
+    "id": 41,
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "patronymic": "Иванович",
+    "git": "https://github.com/user40",
+    "phone": "+7-916-123-45-67",
+    "telegram": null,
+    "email": "student40@mail.ru"
+  },
+  {
     "id": 47,
     "first_name": "Со",
     "last_name": "Всемиконтактами",
@@ -470,13 +440,43 @@
     "email": "full@example.com"
   },
   {
-    "id": 48,
-    "first_name": "Поиск",
-    "last_name": "Тестовый",
-    "patronymic": "Искомый",
-    "git": "https://gitlab.com/search/test",
-    "phone": "8(916)999-88-77",
-    "telegram": "@searchme56789",
-    "email": "search@test.ru"
+    "id": 27,
+    "first_name": "Алексей",
+    "last_name": "Васильев",
+    "patronymic": "Сергеевна",
+    "git": null,
+    "phone": "+7 916 123-45-67",
+    "telegram": null,
+    "email": "user26@gmail.com"
+  },
+  {
+    "id": 37,
+    "first_name": "Алексей",
+    "last_name": "Васильев",
+    "patronymic": "Сергеевна",
+    "git": "https://github.com/user36",
+    "phone": "+79161234567",
+    "telegram": "@dev00036",
+    "email": "user36@gmail.com"
+  },
+  {
+    "id": 17,
+    "first_name": "Алексей",
+    "last_name": "Васильев",
+    "patronymic": "Сергеевна",
+    "git": "https://github.com/user16",
+    "phone": "+7-916-123-45-67",
+    "telegram": "@coder0016",
+    "email": "user16@gmail.com"
+  },
+  {
+    "id": 7,
+    "first_name": "Алексей",
+    "last_name": "Васильев",
+    "patronymic": "Сергеевна",
+    "git": null,
+    "phone": "+79161234567",
+    "telegram": null,
+    "email": "user6@gmail.com"
   }
 ]

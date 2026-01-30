@@ -5,82 +5,25 @@ require_relative '../views/dialogs/student_dialog'
 class StudentController
   include Observer
   
-  attr_reader :view, :model, :selected_rows
-  
-  def initialize(view, student_list)
-    @view = view
-    @student_list = student_list
-    @current_filters = {}
-    @current_sort = { column: 1, direction: :asc }
-    @current_page = 1
-    @items_per_page = 20
-    @selected_rows = []
-    @selected_student_ids = []
-    @current_data = student_list.all_students
-    sort_current_data
-    
-    # Регистрируем себя как наблюдатель во View
-    @view.add_observer(self) if @view.respond_to?(:add_observer)
+  def initialize(model)
+    @model = model
   end
   
-  # Метод наблюдателя для обработки событий от View
+  # Обработка событий от View
   def on_observable_event(event_type, data = nil, observable = nil)
     case event_type
-    when :selection_changed
-      on_selection_changed(data)
-    when :student_double_clicked
-      on_student_double_click(data)
-    when :page_changed
-      on_page_changed(data)
     when :sort_column
       sort_by_column(data)
-    when :apply_filters
-      apply_filters(data)
-    when :reset_filters
-      reset_filters
-    when :refresh_table
-      refresh_table
-    when :view_ready
-      refresh_table
+    when :page_changed
+      change_page(data)
     end
-  end
-  
-  # Методы для обработки событий
-  def on_selection_changed(selected_rows)
-    @selected_rows = selected_rows
-    @selected_student_ids = selected_rows.map { |row| get_student_id_at_row(row) }
-    update_buttons_state
-  end
-  
-  def on_student_double_click(row)
-    student_id = get_student_id_at_row(row)
-    return unless student_id
-    
-    edit_student_dialog(student_id)
-  end
-  
-  def on_page_changed(page)
-    @current_page = page
-    update_table_display
-  end
-  
-  def sort_by_column(column_index)
-    if @current_sort[:column] == column_index
-      @current_sort[:direction] = (@current_sort[:direction] == :asc) ? :desc : :asc
-    else
-      @current_sort = { column: column_index, direction: :asc }
-    end
-    
-    sort_current_data
-    @current_page = 1
-    update_table_display
   end
   
   # Команды от пользователя
   def add_student
     show_student_dialog(nil) do |student_data|
       if student_data
-        create_and_save_student(student_data)
+        create_student(student_data)
         true
       else
         false
@@ -88,189 +31,12 @@ class StudentController
     end
   end
   
-  def edit_student
-    return if @selected_rows.empty?
-    
-    student_id = get_student_id_at_row(@selected_rows.first)
-    return unless student_id
-    
-    edit_student_dialog(student_id)
-  end
-  
-  def delete_students
-    return if @selected_rows.empty?
-    
-    ids = @selected_rows.map { |row| get_student_id_at_row(row) }
-    
-    message = "Вы уверены, что хотите удалить #{ids.size} студента(ов)?"
-    if confirm_dialog("Подтверждение удаления", message)
-      deleted_count = 0
-      
-      ids.each do |id|
-        student = @student_list.get_student_by_id(id)
-        next unless student
-        
-        if @student_list.delete_student_by_id(id)
-          deleted_count += 1
-        end
-      end
-      
-      if deleted_count > 0
-        @student_list.save_data
-        apply_filters(@current_filters)
-        info_dialog("Удаление", "Удалено #{deleted_count} из #{ids.size} студентов")
-      end
-    end
-  end
-  
-  def apply_filters(filters = @current_filters)
-    @current_filters = filters
-    reload_filtered_data
-    @current_page = 1
-    update_table_display
-  end
-  
-  def reset_filters
-    @current_filters = {}
-    reload_filtered_data
-    @current_page = 1
-    update_table_display
-  end
-  
-  def refresh_table
-    apply_filters(@current_filters)
-  end
-  
-  private
-  
-  def reload_filtered_data
-    all_students = @student_list.all_students
-    filtered_students = filter_students(all_students, @current_filters)
-    @current_data = filtered_students
-    sort_current_data
-  end
-  
-  def filter_students(students, filters)
-    return students unless filters && !filters.empty?
-    
-    students.select do |student|
-      fio_match = true
-      if filters[:fio] && !filters[:fio].empty?
-        full_name = student.last_name_initials.downcase
-        search_term = filters[:fio].downcase
-        fio_match = full_name.include?(search_term)
-      end
-      
-      git_match = field_filter(student, :git, filters[:git])
-      email_match = field_filter(student, :email, filters[:email])
-      phone_match = field_filter(student, :phone, filters[:phone])
-      telegram_match = field_filter(student, :telegram, filters[:telegram])
-      
-      fio_match && git_match && email_match && phone_match && telegram_match
-    end
-  end
-  
-  def field_filter(student, field_name, filter)
-    return true unless filter
-    
-    field_value = get_field_value(student, field_name)
-    has_field = !field_value.nil? && !field_value.empty?
-    
-    case filter[:state]
-    when "yes"
-      if filter[:value] && !filter[:value].empty?
-        has_field && field_value.downcase.include?(filter[:value].downcase)
-      else
-        has_field
-      end
-    when "no"
-      !has_field
-    when "any"
-      true
-    else
-      true
-    end
-  end
-
-  def get_field_value(student, field_name)
-    case field_name
-    when :git
-      student.git
-    when :email
-      if student.respond_to?(:email)
-        student.email
-      elsif student.instance_variable_defined?(:@email)
-        student.instance_variable_get(:@email)
-      end
-    when :phone
-      if student.respond_to?(:phone)
-        student.phone
-      elsif student.instance_variable_defined?(:@phone)
-        student.instance_variable_get(:@phone)
-      end
-    when :telegram
-      if student.respond_to?(:telegram)
-        student.telegram
-      elsif student.instance_variable_defined?(:@telegram)
-        student.instance_variable_get(:@telegram)
-      end
-    end
-  end
-    
-  def sort_current_data
-    return if @current_data.empty?
-    
-    @current_data.sort_by!(&sort_proc)
-    
-    if @current_sort[:direction] == :desc
-      @current_data.reverse!
-    end
-  end
-  
-  def sort_proc
-    column = @current_sort[:column]
-    
-    case column
-    when 0
-      ->(s) { s.id }
-    when 1
-      ->(s) { s.last_name_initials.downcase }
-    when 2
-      ->(s) { [s.has_git? ? 0 : 1, s.git.to_s.downcase] }
-    when 3
-      ->(s) { [s.has_contact? ? 0 : 1, s.contact.to_s.downcase] }
-    else
-      ->(s) { s.id }
-    end
-  end
-  
-  def get_current_page_data
-    start_index = (@current_page - 1) * @items_per_page
-    end_index = start_index + @items_per_page - 1
-    
-    return [] if @current_data.empty? || start_index >= @current_data.size
-    
-    actual_end = [end_index, @current_data.size - 1].min
-    @current_data[start_index..actual_end] || []
-  end
-  
-  def show_student_dialog(student = nil, &on_save)
-    title = student ? "Редактирование студента" : "Добавление студента"
-    dialog = StudentDialog.new(@view, student, title)
-    
-    if dialog.execute != 0
-      student_data = dialog.result
-      on_save.call(student_data) if block_given?
-    end
-  end
-  
-  def edit_student_dialog(student_id)
-    student = find_student_in_current_data(student_id)
+  def edit_student(student)
     return unless student
     
     show_student_dialog(student) do |student_data|
       if student_data
-        update_and_save_student(student, student_data)
+        update_student(student, student_data)
         true
       else
         false
@@ -278,7 +44,86 @@ class StudentController
     end
   end
   
-  def create_and_save_student(student_data)
+  def delete_students(student_ids)
+    return if student_ids.empty?
+    
+    message = "Вы уверены, что хотите удалить #{student_ids.size} студента(ов)?"
+    if confirm_dialog("Подтверждение удаления", message)
+      student_ids.each { |id| @model.delete_student_by_id(id) }
+    end
+  end
+  
+  def apply_filters(filters)
+    @model.update_filters(filters)
+  end
+  
+  def reset_filters
+    @model.update_filters({})
+  end
+  
+  # ФИКС: Правильная логика переключения направления сортировки
+  def sort_by_column(column_index)
+    if @model.sort_column == column_index
+      # Тот же столбец - меняем направление
+      new_direction = @model.sort_direction == :asc ? :desc : :asc
+    else
+      # Новый столбец - сортируем по возрастанию
+      new_direction = :asc
+    end
+    
+    @model.update_sort(column_index, new_direction)
+  end
+  
+  def change_page(page)
+    @model.update_page(page)
+  end
+  
+  def refresh_table
+    @model.reload_filtered_data
+  end
+  
+  private
+  
+  def show_student_dialog(student = nil, &on_save)
+    if defined?(StudentDialog)
+      title = student ? "Редактирование студента" : "Добавление студента"
+      dialog = StudentDialog.new(nil, student, title)
+      
+      if dialog.execute != 0
+        student_data = dialog.result
+        on_save.call(student_data) if block_given?
+      end
+    else
+      # Если диалога нет, создаем простой
+      create_simple_dialog(student, &on_save)
+    end
+  end
+  
+  def create_simple_dialog(student = nil, &on_save)
+    require 'fox16'
+    include Fox
+    
+    dialog = FXDialogBox.new(nil, student ? "Редактирование студента" : "Добавление студента")
+    
+    result = FXMessageBox.question(dialog, MBOX_YES_NO, "Тест", 
+              student ? "Редактировать студента?" : "Добавить тестового студента?")
+    
+    if result == MBOX_CLICKED_YES
+      on_save.call({
+        first_name: "Тест",
+        last_name: "Студент",
+        patronymic: "Тестович",
+        git: "https://github.com/test",
+        email: "test@example.com",
+        phone: "+79161234567",
+        telegram: "@testuser"
+      }) if block_given?
+    end
+    
+    dialog.execute
+  end
+  
+  def create_student(student_data)
     require_relative '../models/student'
     
     new_student = Student.new(
@@ -291,13 +136,10 @@ class StudentController
       telegram: student_data[:telegram]
     )
     
-    @student_list.add_student(new_student)
-    @student_list.save_data
-    apply_filters(@current_filters)
-    info_dialog("Успех", "Студент добавлен успешно!")
+    @model.add_student(new_student)
   end
   
-  def update_and_save_student(old_student, student_data)
+  def update_student(old_student, student_data)
     require_relative '../models/student'
     
     updated_student = Student.new(
@@ -310,52 +152,13 @@ class StudentController
       telegram: student_data[:telegram]
     )
     
-    if @student_list.replace_student_by_id(old_student.id, updated_student)
-      @student_list.save_data
-      apply_filters(@current_filters)
-      info_dialog("Успех", "Студент обновлен успешно!")
-    else
-      error_dialog("Ошибка", "Не удалось обновить студента")
-    end
-  end
-  
-  def get_student_id_at_row(row)
-    return unless @view.table && @view.table.respond_to?(:getItemText)
-    @view.table.getItemText(row, 0).to_i
-  end
-  
-  def find_student_in_current_data(student_id)
-    @current_data.find { |s| s.id == student_id }
-  end
-  
-  def update_buttons_state
-    return unless @view.respond_to?(:update_buttons_state)
-    @view.update_buttons_state(@selected_rows.size)
-  end
-  
-  def update_table_display
-    return unless @view.respond_to?(:display_data)
-    
-    page_data = get_current_page_data
-    
-    require_relative '../models/student_short'
-    student_shorts = page_data.map { |s| StudentShort.from_student(s) }
-    
-    require_relative '../models/data_list_student_short'
-    data_list = DataListStudentShort.new(student_shorts)
-    
-    @view.display_data(data_list, @current_data.size, @current_page)
+    @model.replace_student_by_id(old_student.id, updated_student)
   end
   
   def confirm_dialog(title, message)
-    FXMessageBox.question(@view, MBOX_YES_NO, title, message) == MBOX_CLICKED_YES
-  end
-  
-  def info_dialog(title, message)
-    FXMessageBox.information(@view, MBOX_OK, title, message)
-  end
-  
-  def error_dialog(title, message)
-    FXMessageBox.error(@view, MBOX_OK, title, message)
+    require 'fox16'
+    include Fox
+    
+    FXMessageBox.question(nil, MBOX_YES_NO, title, message) == MBOX_CLICKED_YES
   end
 end

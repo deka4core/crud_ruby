@@ -1,46 +1,34 @@
+# app/models/student_list_json.rb
 require 'json'
 require_relative 'student'
 require_relative 'student_short'
 require_relative 'data_list_student_short'
+require_relative '../core/observable'
 
-# Класс для управления списком студентов, хранящимся в JSON файле.
-#
-# Класс предоставляет полный CRUD функционал
-# для работы со студентами, а также методы для сортировки, пагинации
-# и экспорта данных в формат, пригодный для отображения.
-#
-# @author dekacore
-# @since 1.0.0
-# @version 1.0.0
 class StudentsListJSON
-  # @return [String] путь к файлу JSON, с которым работает данный экземпляр
-  attr_reader :file_path
+  include Observable
   
-  # Инициализирует новый экземпляр StudentsListJSON.
-  #
-  # При указании пути к файлу автоматически загружает данные из него,
-  # если файл существует. Если файл не существует, создается пустой список.
-  #
-  # @param [String, nil] file_path путь к JSON файлу со списком студентов.
-  #   Если не указан, список будет пустым.
-  #
-  # @raise [JSON::ParserError] если JSON файл содержит синтаксические ошибки
+  attr_reader :file_path, :filters, :sort_column, :sort_direction, 
+              :current_page, :items_per_page, :filtered_students
+  
   def initialize(file_path = nil)
     @students = []
     @file_path = file_path
+    
+    # Состояние приложения
+    @filters = {}
+    @sort_column = 1
+    @sort_direction = :asc
+    @current_page = 1
+    @items_per_page = 20
+    @filtered_students = []
+    
     load_data if file_path && File.exist?(file_path)
+    
+    # При загрузке сразу фильтруем и сортируем
+    reload_filtered_data
   end
 
-  # Загружает данные студентов из JSON файла.
-  #
-  # Метод парсит JSON файл и создает объекты {Student} на основе полученных данных.
-  # Если файл не существует или пуст, список студентов остается пустым.
-  #
-  # @note Метод вызывается автоматически при создании экземпляра с указанием file_path.
-  #
-  # @return [void]
-  # @raise [JSON::ParserError] если JSON файл содержит синтаксические ошибки
-  # @see #save_data
   def load_data
     return unless File.exist?(@file_path)
     
@@ -59,18 +47,11 @@ class StudentsListJSON
         email: student_data[:email]
       )
     end
+    
+    reload_filtered_data
+    notify_observers(:data_loaded)
   end
 
-  # Сохраняет данные студентов в JSON файл.
-  #
-  # Метод преобразует все объекты {Student} в хэши и сохраняет их в JSON формате
-  # в файл, указанный при создании экземпляра.
-  #
-  # @note Для работы метода должен быть установлен {#file_path}.
-  #
-  # @return [void]
-  #
-  # @see #load_data
   def save_data
     return unless @file_path
     
@@ -88,84 +69,17 @@ class StudentsListJSON
     end
     
     File.write(@file_path, JSON.pretty_generate(students_data))
+    notify_observers(:data_saved)
   end
 
-  # Находит студента по его идентификатору.
-  #
-  # @param [Integer] id идентификатор студента для поиска.
-  #
-  # @return [Student, nil] найденный объект {Student} или nil, если студент
-  #   с таким ID не найден.
+  # Методы управления данными
   def get_student_by_id(id)
     @students.find { |student| student.id == id }
   end
 
-  # Возвращает подмножество студентов в формате, пригодном для отображения.
-  #
-  # Метод возвращает k студентов, начиная с позиции
-  # (n-1)*k. Результат конвертируется в {StudentShort} объекты и упаковывается
-  # в {DataListStudentShort} для удобного отображения в табличном виде.
-  #
-  # @param [Integer] k количество студентов на "странице".
-  # @param [Integer] n номер "страницы" (начинается с 1).
-  # @param [DataList, nil] existing_data_list существующий объект DataList
-  #   для повторного использования (опционально). Если передан, метод обновит
-  #   его данные вместо создания нового объекта.
-  #
-  # @return [DataListStudentShort] объект для отображения списка студентов.
-  #
-  # @note Если запрошенный диапазон выходит за пределы списка,
-  #   возвращаются только существующие студенты.
-  def get_k_n_student_short_list(k, n, existing_data_list = nil)
-    start_index = (n - 1) * k
-    end_index = start_index + k - 1
-    
-    selected_students = @students[start_index..end_index] || []
-    
-    student_shorts = selected_students.map do |student|
-      StudentShort.from_student(student)
-    end
-    
-    if existing_data_list && existing_data_list.is_a?(DataList)
-      existing_data_list.data = student_shorts
-      existing_data_list
-    else
-      DataListStudentShort.new(student_shorts)
-    end
-  end
-
-  # Сортирует список студентов по фамилии с инициалами.
-  #
-  # Сортировка выполняется в алфавитном порядке без учета регистра.
-  # Метод изменяет порядок элементов в исходном списке.
-  #
-  # @return [void]
-  #
-  # @see Student#last_name_initials
-  def sort_by_full_name
-    @students.sort_by! do |student|
-      student.last_name_initials.downcase
-    end
-  end
-
-  # Добавляет нового студента в список.
-  #
-  # Метод автоматически генерирует новый уникальный ID для студента
-  # (на 1 больше максимального существующего ID) и создает новый объект
-  # {Student} с этим ID.
-  #
-  # @param [Student] student объект студента для добавления.
-  #
-  # @return [Student] новый объект студента с присвоенным ID.
-  #
-  # @note Исходный объект student не изменяется. Создается новый объект
-  #   с присвоенным ID.
-  # @note Если список пуст, новый студент получает ID = 1.
   def add_student(student)
-    # Генерируем новый ID
     new_id = @students.empty? ? 1 : @students.map(&:id).max + 1
     
-    # Создаем нового студента с новым ID
     student_with_id = Student.new(
       first_name: student.first_name,
       last_name: student.last_name,
@@ -178,18 +92,12 @@ class StudentsListJSON
     )
     
     @students << student_with_id
+    save_data
+    reload_filtered_data
+    notify_observers(:student_added, student_with_id)
     student_with_id
   end
 
-  # Заменяет студента с указанным ID новым объектом студента.
-  #
-  # @param [Integer] id идентификатор студента для замены.
-  # @param [Student] new_student новый объект студента.
-  #
-  # @return [Boolean] true, если замена выполнена успешно;
-  #   false, если студент с указанным ID не найден.
-  #
-  # @note ID студента сохраняется. Новый объект создается с оригинальным ID.
   def replace_student_by_id(id, new_student)
     index = @students.find_index { |student| student.id == id }
     return false unless index
@@ -204,44 +112,193 @@ class StudentsListJSON
       telegram: new_student.instance_variable_get(:@telegram),
       email: new_student.instance_variable_get(:@email)
     )
+    
+    save_data
+    reload_filtered_data
+    notify_observers(:student_updated, @students[index])
     true
   end
 
-  # Удаляет студента с указанным ID из списка.
-  #
-  # @param [Integer] id идентификатор студента для удаления.
-  #
-  # @return [Boolean] true, если студент был найден и удален;
-  #   false, если студент с указанным ID не найден.
-  #
-  # @note ID удаленного студента освобождается и больше не используется.
   def delete_student_by_id(id)
+    student = get_student_by_id(id)
     initial_size = @students.size
     @students.reject! { |student| student.id == id }
-    initial_size != @students.size
+    
+    if initial_size != @students.size
+      save_data
+      reload_filtered_data
+      notify_observers(:student_deleted, id)
+      true
+    else
+      false
+    end
   end
 
-  # Возвращает количество студентов в списке.
-  #
-  # @return [Integer] текущее количество студентов.
   def get_student_short_count
     @students.size
   end
 
-  # Возвращает копию списка всех студентов.
-  #
-  # Метод возвращает массив, содержащий всех студентов в текущем порядке.
-  # Возвращается копия массива, поэтому изменения в возвращенном массиве
-  # не влияют на внутреннее состояние объекта.
-  #
-  # @return [Array<Student>] массив всех студентов.
   def all_students
     @students.dup
   end
 
-  private
+  # Методы управления состоянием
+  def update_filters(new_filters)
+    @filters = new_filters || {}
+    @current_page = 1
+    reload_filtered_data
+    notify_observers(:filters_updated, @filters)
+  end
 
-  # @return [Array<Student>] внутренний массив студентов.
-  # @private
-  attr_accessor :students
+  # ФИКС: update_sort теперь принимает только явное направление
+  def update_sort(column, direction)
+    @sort_column = column
+    @sort_direction = direction
+    @current_page = 1
+    sort_filtered_data
+    notify_observers(:sort_updated, { column: column, direction: direction })
+  end
+
+  def update_page(page)
+    @current_page = page
+    notify_observers(:page_updated, page)
+  end
+
+  def reload_filtered_data
+    @filtered_students = apply_filters(@students)
+    sort_filtered_data
+    notify_observers(:state_changed)
+  end
+
+  def apply_filters(students)
+    return students unless @filters && !@filters.empty?
+    
+    students.select do |student|
+      matches_all_filters?(student)
+    end
+  end
+
+  def matches_all_filters?(student)
+    # Проверка ФИО
+    if @filters[:fio] && !@filters[:fio].empty?
+      full_name = student.last_name_initials.downcase
+      search_term = @filters[:fio].downcase
+      return false unless full_name.include?(search_term)
+    end
+    
+    # Проверка полей
+    [:git, :email, :phone, :telegram].each do |field|
+      filter = @filters[field]
+      next unless filter
+      
+      field_value = get_field_value(student, field)
+      has_field = !field_value.nil? && !field_value.empty?
+      
+      case filter[:state]
+      when "yes"
+        if filter[:value] && !filter[:value].empty?
+          return false unless has_field && field_value.downcase.include?(filter[:value].downcase)
+        else
+          return false unless has_field
+        end
+      when "no"
+        return false if has_field
+      when "any"
+        # Любое значение подходит
+      else
+        return false
+      end
+    end
+    
+    true
+  end
+
+  def get_field_value(student, field_name)
+    case field_name
+    when :git
+      student.git
+    when :email
+      if student.respond_to?(:email)
+        student.email
+      elsif student.instance_variable_defined?(:@email)
+        student.instance_variable_get(:@email)
+      end
+    when :phone
+      if student.respond_to?(:phone)
+        student.phone
+      elsif student.instance_variable_defined?(:@phone)
+        student.instance_variable_get(:@phone)
+      end
+    when :telegram
+      if student.respond_to?(:telegram)
+        student.telegram
+      elsif student.instance_variable_defined?(:@telegram)
+        student.instance_variable_get(:@telegram)
+      end
+    end
+  end
+
+  def sort_filtered_data
+    return if @filtered_students.empty?
+    
+    # Сортируем
+    @filtered_students.sort_by!(&sort_proc)
+    
+    # Если desc - разворачиваем
+    if @sort_direction == :desc
+      @filtered_students.reverse!
+    end
+  end
+
+  def sort_proc
+    column = @sort_column
+    
+    case column
+    when 0  # ID
+      ->(s) { s.id.to_i }
+    when 1  # ФИО
+      ->(s) { s.last_name_initials.to_s.downcase }
+    when 2  # Git
+      ->(s) { 
+        git = s.git.to_s
+        [git.empty? ? 1 : 0, git.downcase]
+      }
+    when 3  # Контакт
+      ->(s) { 
+        contact = s.contact.to_s
+        [contact.empty? ? 1 : 0, contact.downcase]
+      }
+    else
+      ->(s) { s.id.to_i }
+    end
+  end
+
+  # Методы для получения данных для отображения
+  def get_current_page_data
+    start_index = (@current_page - 1) * @items_per_page
+    end_index = start_index + @items_per_page - 1
+    
+    return [] if @filtered_students.empty? || start_index >= @filtered_students.size
+    
+    actual_end = [end_index, @filtered_students.size - 1].min
+    @filtered_students[start_index..actual_end] || []
+  end
+
+  def get_student_short_list_for_page
+    page_data = get_current_page_data
+    page_data.map { |student| StudentShort.from_student(student) }
+  end
+
+  def get_data_list_for_page
+    student_shorts = get_student_short_list_for_page
+    DataListStudentShort.new(student_shorts)
+  end
+
+  def total_pages
+    [1, (@filtered_students.size.to_f / @items_per_page).ceil].max
+  end
+
+  def total_filtered_students
+    @filtered_students.size
+  end
 end

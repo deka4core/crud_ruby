@@ -2,7 +2,7 @@
 require 'fox16'
 include Fox
 require 'fileutils'
-require_relative '../core/observable'
+require_relative '../core/observer'
 
 require_relative '../models/student_list_json'
 require_relative '../controllers/student_controller'
@@ -11,7 +11,7 @@ require_relative 'components/filter_panel'
 require_relative 'components/pagination_panel'
 
 class MainWindow < FXMainWindow
-  include Observable
+  include Observer
   
   attr_reader :student_list, :student_table, :controller, 
               :filter_panel, :pagination_panel
@@ -28,24 +28,49 @@ class MainWindow < FXMainWindow
   def create
     super
     show(PLACEMENT_SCREEN)
-    notify_observers(:view_ready)
+    
+    # Принудительно вызываем первое обновление
+    @controller.refresh_table
   end
   
-  # Метод наблюдателя для обработки событий от компонентов
+  # Observer метод - реагируем на изменения Model
   def on_observable_event(event_type, data = nil, observable = nil)
     case event_type
+    when :state_changed, :student_added, :student_updated, :student_deleted,
+         :filters_updated, :sort_updated, :page_updated, :data_loaded, :data_saved
+      update_view
     when :selection_changed
-      notify_observers(:selection_changed, data)
+      update_buttons_state(data ? data.size : 0)
     when :student_double_clicked
-      notify_observers(:student_double_clicked, data)
-    when :page_changed
-      notify_observers(:page_changed, data)
+      handle_student_double_click(data) if data
     when :sort_column
-      notify_observers(:sort_column, data)
+      # Передаем контроллеру
+      @controller.sort_by_column(data)
+    when :page_changed
+      @controller.change_page(data)
     end
   end
   
-  # Методы для контроллера
+  def update_view
+    return unless @student_list && @student_table && @pagination
+    
+    # Обновляем таблицу
+    data_list = @student_list.get_data_list_for_page
+    @student_table.update_table(data_list)
+    
+    # Обновляем пагинацию
+    @pagination.update_info(@student_list.total_filtered_students)
+    @pagination.current_page = @student_list.current_page
+    
+    # Обновляем счетчик
+    if @count_label
+      @count_label.text = "Всего: #{@student_list.total_filtered_students}"
+    end
+    
+    # Обновляем состояние кнопок
+    update_buttons_state(@student_table.selected_rows.size)
+  end
+  
   def update_buttons_state(selected_count)
     return unless @edit_btn && @delete_btn
     
@@ -61,26 +86,15 @@ class MainWindow < FXMainWindow
       @delete_btn.enable
     end
   end
-
-  def display_data(data_list, total_count, current_page)
-    return unless @student_table && @pagination
-    
-    @student_table.update_table(data_list)
-    
-    @pagination.update_info(total_count)
-    @pagination.current_page = current_page
-    
-    if @count_label
-      @count_label.text = "Всего: #{total_count}"
-    end
-  end
   
-  def table
-    @student_table
-  end
-
-  def pagination
-    @pagination
+  def handle_student_double_click(row_index)
+    student_id = @student_table.get_student_id_at_row(row_index)
+    return unless student_id
+    
+    student = @student_list.get_student_by_id(student_id)
+    return unless student
+    
+    @controller.edit_student(student)
   end
   
   private
@@ -97,6 +111,9 @@ class MainWindow < FXMainWindow
     
     @student_list = StudentsListJSON.new(json_file)
     
+    # Подписываемся на изменения Model
+    @student_list.add_observer(self)
+    
     if @student_list.get_student_short_count == 0
       add_test_students
       @student_list.save_data
@@ -104,7 +121,7 @@ class MainWindow < FXMainWindow
   end
   
   def setup_controllers
-    @controller = StudentController.new(self, @student_list)
+    @controller = StudentController.new(@student_list)
   end
   
   def setup_ui
@@ -125,7 +142,7 @@ class MainWindow < FXMainWindow
     reset_btn = FXButton.new(reset_frame, "Сбросить фильтры")
     reset_btn.connect(SEL_COMMAND) do
       @filter_panel.reset
-      notify_observers(:reset_filters)
+      @controller.reset_filters
     end
   end
   
@@ -143,8 +160,7 @@ class MainWindow < FXMainWindow
     
     FXHorizontalFrame.new(control_panel, LAYOUT_FILL_X)
     
-    student_count = @student_list.get_student_short_count
-    @count_label = FXLabel.new(control_panel, "Всего: #{student_count}")
+    @count_label = FXLabel.new(control_panel, "Всего: 0")
   end
   
   def setup_table_area(parent)
@@ -153,19 +169,16 @@ class MainWindow < FXMainWindow
     FXTabItem.new(@tab_book, "Студенты", nil)
     students_frame = FXVerticalFrame.new(@tab_book, LAYOUT_FILL_X | LAYOUT_FILL_Y)
     
-    # Создаем таблицу и регистрируем MainWindow как наблюдатель
     @student_table = StudentTable.new(students_frame)
     @student_table.add_observer(self)
     
     FXTabItem.new(@tab_book, "Вкладка 2", nil)
     tab2_frame = FXVerticalFrame.new(@tab_book, LAYOUT_FILL_X | LAYOUT_FILL_Y)
-    FXLabel.new(tab2_frame, "Содержимое второй вкладки\n\nЭта вкладка будет реализована в будущих лабораторных работах.", 
-                nil, LAYOUT_FILL_X | LAYOUT_FILL_Y)
+    FXLabel.new(tab2_frame, "Содержимое второй вкладки", nil, LAYOUT_FILL_X | LAYOUT_FILL_Y)
     
     FXTabItem.new(@tab_book, "Вкладка 3", nil)
     tab3_frame = FXVerticalFrame.new(@tab_book, LAYOUT_FILL_X | LAYOUT_FILL_Y)
-    FXLabel.new(tab3_frame, "Содержимое третьей вкладки\n\nЭта вкладка будет реализована в будущих лабораторных работах.", 
-                nil, LAYOUT_FILL_X | LAYOUT_FILL_Y)
+    FXLabel.new(tab3_frame, "Содержимое третьей вкладки", nil, LAYOUT_FILL_X | LAYOUT_FILL_Y)
   end
   
   def setup_pagination_panel(parent)
@@ -174,12 +187,29 @@ class MainWindow < FXMainWindow
   end
   
   def setup_event_handlers
+    # Кнопки вызывают методы контроллера
     @add_btn.connect(SEL_COMMAND) { @controller.add_student }
-    @edit_btn.connect(SEL_COMMAND) { @controller.edit_student }
-    @delete_btn.connect(SEL_COMMAND) { @controller.delete_students }
+    
+    @edit_btn.connect(SEL_COMMAND) do
+      selected = @student_table.selected_rows
+      if !selected.empty?
+        student_id = @student_table.get_student_id_at_row(selected.first)
+        student = @student_list.get_student_by_id(student_id)
+        @controller.edit_student(student) if student
+      end
+    end
+    
+    @delete_btn.connect(SEL_COMMAND) do
+      selected = @student_table.selected_rows
+      if !selected.empty?
+        student_ids = selected.map { |row| @student_table.get_student_id_at_row(row) }.compact
+        @controller.delete_students(student_ids) unless student_ids.empty?
+      end
+    end
+    
     @refresh_btn.connect(SEL_COMMAND) do
       filters = @filter_panel.get_filters
-      notify_observers(:apply_filters, filters)
+      @controller.apply_filters(filters)
     end
     
     self.connect(SEL_CLOSE) do
@@ -198,7 +228,7 @@ class MainWindow < FXMainWindow
     patronymics = ["Иванович", "Петрович", "Сергеевич", "Александрович", "Дмитриевич", 
                    "Алексеевна", "Сергеевна", "Александровна", "Дмитриевна", "Владимировна"]
     
-    45.times do |i|
+    10.times do |i|
       first_name = first_names[i % first_names.size]
       last_name = last_names[i % last_names.size]
       patronymic = patronymics[i % patronymics.size]
@@ -246,40 +276,6 @@ class MainWindow < FXMainWindow
       rescue => e
         puts "❌ Ошибка при создании студента #{i+1}: #{e.message}"
       end
-    end
-    
-    begin
-      test_students << Student.new(
-        first_name: "Без",
-        last_name: "Контактов", 
-        patronymic: "Никаких",
-        git: nil,
-        email: nil,
-        phone: nil,
-        telegram: nil
-      )
-      
-      test_students << Student.new(
-        first_name: "Со",
-        last_name: "Всемиконтактами",
-        patronymic: "Всеволод",
-        git: "https://github.com/fullstack/project",
-        email: "full@example.com",
-        phone: "+7 916 123-45-67",
-        telegram: "@fullcontact123"
-      )
-      
-      test_students << Student.new(
-        first_name: "Поиск",
-        last_name: "Тестовый",
-        patronymic: "Искомый", 
-        git: "https://gitlab.com/search/test",
-        email: "search@test.ru",
-        phone: "8(916)999-88-77",
-        telegram: "@searchme56789"
-      )
-    rescue => e
-      puts "❌ Ошибка в специальных кейсах: #{e.message}"
     end
     
     test_students.each { |student| @student_list.add_student(student) }
