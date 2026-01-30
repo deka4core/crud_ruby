@@ -1,9 +1,8 @@
+# app/models/data_list_student_short.rb
 require_relative 'data_list'
-require_relative 'student_short'
 
 class DataListStudentShort < DataList
- 
-  private
+  
   def column_names
     ["Фамилия И.О.", "Git", "Контакт"]
   end

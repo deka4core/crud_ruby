@@ -3,10 +3,6 @@ require 'fox16'
 include Fox
 
 class StudentDialog < FXDialogBox
-  # Константы для кнопок
-  ID_ACCEPT = FXDialogBox::ID_ACCEPT
-  ID_CANCEL = FXDialogBox::ID_CANCEL
-  
   def initialize(parent, student = nil, title = nil)
     title ||= student ? "Редактирование студента" : "Добавление студента"
     super(parent, title, DECOR_TITLE | DECOR_BORDER | DECOR_CLOSE)
@@ -25,10 +21,10 @@ class StudentDialog < FXDialogBox
   def execute
     show(PLACEMENT_SCREEN)
     getApp().runModalFor(self)
-    result
+    @student_data
   end
   
-  def result
+  def student_data
     @student_data
   end
   
@@ -71,14 +67,12 @@ class StudentDialog < FXDialogBox
       JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     @last_name_input = FXTextField.new(fields_frame, 30, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
-    @last_name_input.backColor = FXRGB(255, 255, 240)
     
     # Имя (обязательное)
     FXLabel.new(fields_frame, "Имя:*", nil, 
       JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     @first_name_input = FXTextField.new(fields_frame, 30, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
-    @first_name_input.backColor = FXRGB(255, 255, 240)
     
     # Отчество (необязательное)
     FXLabel.new(fields_frame, "Отчество:", nil, 
@@ -86,20 +80,11 @@ class StudentDialog < FXDialogBox
     @patronymic_input = FXTextField.new(fields_frame, 30, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
     
-    # Пустая строка для разделения
-    FXLabel.new(fields_frame, "")
-    FXLabel.new(fields_frame, "")
-    
     # Git
     FXLabel.new(fields_frame, "Git URL:", nil, 
       JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     @git_input = FXTextField.new(fields_frame, 40, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
-    
-    # Подсказка для Git
-    FXLabel.new(fields_frame, "")
-    FXLabel.new(fields_frame, "Пример: https://github.com/username или https://gitlab.com/username",
-      nil, JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     
     # Email
     FXLabel.new(fields_frame, "Email:", nil, 
@@ -107,32 +92,17 @@ class StudentDialog < FXDialogBox
     @email_input = FXTextField.new(fields_frame, 40, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
     
-    # Подсказка для Email
-    FXLabel.new(fields_frame, "")
-    FXLabel.new(fields_frame, "Пример: user@example.com",
-      nil, JUSTIFY_LEFT | LAYOUT_CENTER_Y)
-    
     # Телефон
     FXLabel.new(fields_frame, "Телефон:", nil, 
       JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     @phone_input = FXTextField.new(fields_frame, 20, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
     
-    # Подсказка для телефона
-    FXLabel.new(fields_frame, "")
-    FXLabel.new(fields_frame, "Формат: +79123456789 или 89123456789",
-      nil, JUSTIFY_LEFT | LAYOUT_CENTER_Y)
-    
     # Telegram
     FXLabel.new(fields_frame, "Telegram:", nil, 
       JUSTIFY_LEFT | LAYOUT_CENTER_Y)
     @telegram_input = FXTextField.new(fields_frame, 30, 
       nil, 0, TEXTFIELD_NORMAL | LAYOUT_CENTER_Y | LAYOUT_FILL_X)
-    
-    # Подсказка для Telegram
-    FXLabel.new(fields_frame, "")
-    FXLabel.new(fields_frame, "Формат: @username",
-      nil, JUSTIFY_LEFT | LAYOUT_CENTER_Y)
   end
   
   def setup_buttons(parent)
@@ -145,17 +115,15 @@ class StudentDialog < FXDialogBox
     
     # Кнопка OK
     ok_btn = FXButton.new(buttons_frame, "Сохранить", 
-      nil, self, ID_ACCEPT,
+      nil, self, FXDialogBox::ID_ACCEPT,
       BUTTON_NORMAL | LAYOUT_RIGHT | FRAME_RAISED | FRAME_THICK,
       :padLeft => 20, :padRight => 5)
-    ok_btn.textColor = FXRGB(0, 100, 0)
     
     # Кнопка Отмена
     cancel_btn = FXButton.new(buttons_frame, "Отмена", 
-      nil, self, ID_CANCEL,
+      nil, self, FXDialogBox::ID_CANCEL,
       BUTTON_NORMAL | LAYOUT_RIGHT | FRAME_RAISED | FRAME_THICK,
       :padLeft => 5, :padRight => 20)
-    cancel_btn.textColor = FXRGB(100, 0, 0)
     
     # Делаем кнопку OK по умолчанию
     ok_btn.setDefault
@@ -165,7 +133,7 @@ class StudentDialog < FXDialogBox
       if validate_form
         save_student_data
         # Закрываем диалог с результатом OK
-        handle(self, MKUINT(ID_ACCEPT, SEL_COMMAND), nil)
+        handle(self, MKUINT(FXDialogBox::ID_ACCEPT, SEL_COMMAND), nil)
       end
     end
   end
@@ -178,22 +146,16 @@ class StudentDialog < FXDialogBox
     @patronymic_input.text = @student.patronymic || ""
     @git_input.text = @student.git || ""
     
-    # Используем геттеры или переменные экземпляра
-    if @student.respond_to?(:email) && @student.email
-      @email_input.text = @student.email
-    elsif @student.instance_variable_defined?(:@email)
+    # Используем переменные экземпляра
+    if @student.instance_variable_defined?(:@email)
       @email_input.text = @student.instance_variable_get(:@email) || ""
     end
     
-    if @student.respond_to?(:phone) && @student.phone
-      @phone_input.text = @student.phone
-    elsif @student.instance_variable_defined?(:@phone)
+    if @student.instance_variable_defined?(:@phone)
       @phone_input.text = @student.instance_variable_get(:@phone) || ""
     end
     
-    if @student.respond_to?(:telegram) && @student.telegram
-      @telegram_input.text = @student.telegram
-    elsif @student.instance_variable_defined?(:@telegram)
+    if @student.instance_variable_defined?(:@telegram)
       @telegram_input.text = @student.instance_variable_get(:@telegram) || ""
     end
   end
@@ -220,38 +182,6 @@ class StudentDialog < FXDialogBox
     
     if @first_name_input.text.strip.empty?
       errors << "Имя не может быть пустым"
-    end
-    
-    # Валидация email если указан
-    email = @email_input.text.strip
-    unless email.empty?
-      unless email.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i)
-        errors << "Неверный формат email"
-      end
-    end
-    
-    # Валидация телефона если указан
-    phone = @phone_input.text.strip
-    unless phone.empty?
-      unless phone.match?(/^(\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$/)
-        errors << "Неверный формат телефона. Используйте: +79123456789 или 89123456789"
-      end
-    end
-    
-    # Валидация telegram если указан
-    telegram = @telegram_input.text.strip
-    unless telegram.empty?
-      unless telegram.match?(/^@[a-zA-Z0-9_]{5,}$/)
-        errors << "Неверный формат Telegram. Используйте: @username (минимум 5 символов после @)"
-      end
-    end
-    
-    # Валидация Git если указан
-    git = @git_input.text.strip
-    unless git.empty?
-      unless git.match?(/^https:\/\/(github|gitlab)\.com\/[a-zA-Z0-9\-_]+\/?/)
-        errors << "Неверный формат Git URL. Используйте: https://github.com/username или https://gitlab.com/username"
-      end
     end
     
     unless errors.empty?
