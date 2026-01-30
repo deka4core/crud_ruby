@@ -1,8 +1,11 @@
 # app/views/components/student_table.rb
 require 'fox16'
 include Fox
+require_relative '../../core/observable'
 
 class StudentTable < FXTable
+  include Observable
+  
   attr_accessor :controller
   
   def initialize(parent, controller = nil)
@@ -12,6 +15,7 @@ class StudentTable < FXTable
           :padding => 2)
     
     @controller = controller
+    
     setup_table
     setup_event_handlers
   end
@@ -58,74 +62,57 @@ class StudentTable < FXTable
   private
   
   def setup_table
-  setTableSize(0, 4)
-  
-  setColumnText(0, "№")
-  setColumnText(1, "Фамилия И.О.")
-  setColumnText(2, "Git")
-  setColumnText(3, "Контакт")
-  
-  # 1. Верхние заголовки - сортировка
-  @columnHeader = self.columnHeader
-  @columnHeader.connect(SEL_COMMAND) do |sender, sel, index|
-    if @controller
-      @controller.sort_by_column(index)
+    setTableSize(0, 4)
+    
+    setColumnText(0, "№")
+    setColumnText(1, "Фамилия И.О.")
+    setColumnText(2, "Git")
+    setColumnText(3, "Контакт")
+    
+    # Верхние заголовки - сортировка
+    @columnHeader = self.columnHeader
+    @columnHeader.connect(SEL_COMMAND) do |sender, sel, index|
+      notify_observers(:sort_column, index)
     end
-  end
-  
-  # 2. ЛЕВЫЕ заголовки - выделение и редактирование
-  @rowHeader = self.rowHeader
-  
-  # Клик по левому заголовку строки
-  @rowHeader.connect(SEL_COMMAND) do |sender, sel, index|
-    # index - это номер строки, по которой кликнули
-    if @controller
-      # ВРУЧНУЮ выделяем строку в таблице
-      killSelection  # Снимаем все выделения
-      selectRow(index, true)  # Выделяем нужную строку
-      
-      # Теперь selected_rows будет содержать эту строку
-      @controller.on_selection_changed(selected_rows)
+    
+    # ЛЕВЫЕ заголовки - выделение и редактирование
+    @rowHeader = self.rowHeader
+    
+    # Клик по левому заголовку строки
+    @rowHeader.connect(SEL_COMMAND) do |sender, sel, index|
+      killSelection
+      selectRow(index, true)
+      notify_observers(:selection_changed, selected_rows)
     end
-  end
-  
-  # ДВОЙНОЙ клик по левому заголовку
-  @rowHeader.connect(SEL_DOUBLECLICKED) do |sender, sel, ptr|
-    # Нужно получить индекс строки из события
-    # В FXRuby для Header можно использовать FXEvent
-    event = Fox::FXEvent.new(ptr)
-    # Определяем, по какому заголовку кликнули
-    # Проще всего использовать текущую выделенную строку
-    selected = selected_rows
-    if !selected.empty? && @controller
-      @controller.on_student_double_click(selected.first)
+    
+    # ДВОЙНОЙ клик по левому заголовку
+    @rowHeader.connect(SEL_DOUBLECLICKED) do |sender, sel, ptr|
+      selected = selected_rows
+      notify_observers(:student_double_clicked, selected.first) unless selected.empty?
     end
+    
+    setColumnWidth(0, 50)
+    setColumnWidth(1, 250)
+    setColumnWidth(2, 200)
+    setColumnWidth(3, 250)
+    
+    begin
+      setBackColor(FXRGB(255, 255, 255))
+      setTextColor(FXRGB(0, 0, 0))
+      setSelBackColor(FXRGB(200, 220, 240))
+      setSelTextColor(FXRGB(0, 0, 0))
+    rescue => e
+    end
+    
+    setRowHeaderWidth(40)
   end
-  
-  setColumnWidth(0, 50)
-  setColumnWidth(1, 250)
-  setColumnWidth(2, 200)
-  setColumnWidth(3, 250)
-  
-  begin
-    setBackColor(FXRGB(255, 255, 255))
-    setTextColor(FXRGB(0, 0, 0))
-    setSelBackColor(FXRGB(200, 220, 240))
-    setSelTextColor(FXRGB(0, 0, 0))
-  rescue => e
-  end
-  
-  setRowHeaderWidth(40)
-end
   
   def setup_event_handlers
-  # Обработчик для обычных кликов по ЯЧЕЙКАМ таблицы
-  connect(SEL_CHANGED) do |sender, sel, ptr|
-    if @controller
-      @controller.on_selection_changed(selected_rows)
+    # Обработчик для обычных кликов по ЯЧЕЙКАМ таблицы
+    connect(SEL_CHANGED) do |sender, sel, ptr|
+      notify_observers(:selection_changed, selected_rows)
     end
   end
-end
     
   def adjust_column_widths
     (0...numColumns).each do |col|

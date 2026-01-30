@@ -1,24 +1,54 @@
 # app/controllers/student_controller.rb
-
+require_relative '../core/observer'
 require_relative '../views/dialogs/student_dialog'
 
 class StudentController
-  attr_reader :view, :model, :current_filters, :current_sort, :current_page
+  include Observer
   
-  def initialize(view, model)
+  attr_reader :view, :model, :selected_rows
+  
+  def initialize(view, student_list)
     @view = view
-    @model = model
-    @selected_rows = []
-    @current_filters = nil
+    @student_list = student_list
+    @current_filters = {}
     @current_sort = { column: 1, direction: :asc }
     @current_page = 1
     @items_per_page = 20
-    @current_data = model.all_students
+    @selected_rows = []
+    @selected_student_ids = []
+    @current_data = student_list.all_students
     sort_current_data
+    
+    # Регистрируем себя как наблюдатель во View
+    @view.add_observer(self) if @view.respond_to?(:add_observer)
   end
   
+  # Метод наблюдателя для обработки событий от View
+  def on_observable_event(event_type, data = nil, observable = nil)
+    case event_type
+    when :selection_changed
+      on_selection_changed(data)
+    when :student_double_clicked
+      on_student_double_click(data)
+    when :page_changed
+      on_page_changed(data)
+    when :sort_column
+      sort_by_column(data)
+    when :apply_filters
+      apply_filters(data)
+    when :reset_filters
+      reset_filters
+    when :refresh_table
+      refresh_table
+    when :view_ready
+      refresh_table
+    end
+  end
+  
+  # Методы для обработки событий
   def on_selection_changed(selected_rows)
     @selected_rows = selected_rows
+    @selected_student_ids = selected_rows.map { |row| get_student_id_at_row(row) }
     update_buttons_state
   end
   
@@ -26,10 +56,7 @@ class StudentController
     student_id = get_student_id_at_row(row)
     return unless student_id
     
-    student = find_student_in_current_data(student_id)
-    return unless student
-    
-    edit_student_dialog(student)
+    edit_student_dialog(student_id)
   end
   
   def on_page_changed(page)
@@ -49,6 +76,7 @@ class StudentController
     update_table_display
   end
   
+  # Команды от пользователя
   def add_student
     show_student_dialog(nil) do |student_data|
       if student_data
@@ -66,10 +94,7 @@ class StudentController
     student_id = get_student_id_at_row(@selected_rows.first)
     return unless student_id
     
-    student = find_student_in_current_data(student_id)
-    return unless student
-    
-    edit_student_dialog(student)
+    edit_student_dialog(student_id)
   end
   
   def delete_students
@@ -82,53 +107,51 @@ class StudentController
       deleted_count = 0
       
       ids.each do |id|
-        student = @model.get_student_by_id(id)
+        student = @student_list.get_student_by_id(id)
         next unless student
         
-        if @model.delete_student_by_id(id)
+        if @student_list.delete_student_by_id(id)
           deleted_count += 1
         end
       end
       
       if deleted_count > 0
-        @model.save_data
-        apply_filters
+        @student_list.save_data
+        apply_filters(@current_filters)
         info_dialog("Удаление", "Удалено #{deleted_count} из #{ids.size} студентов")
       end
     end
   end
   
-  def apply_filters
-    filters = @view.filter_panel.get_filters if @view.respond_to?(:filter_panel) && @view.filter_panel
-    
+  def apply_filters(filters = @current_filters)
     @current_filters = filters
     reload_filtered_data
     @current_page = 1
     update_table_display
   end
-    
+  
   def reset_filters
-    if @view.respond_to?(:filter_panel) && @view.filter_panel
-      @view.filter_panel.reset
-    end
-    apply_filters
+    @current_filters = {}
+    reload_filtered_data
+    @current_page = 1
+    update_table_display
   end
   
   def refresh_table
-    apply_filters
+    apply_filters(@current_filters)
   end
   
   private
   
   def reload_filtered_data
-    all_students = @model.all_students
+    all_students = @student_list.all_students
     filtered_students = filter_students(all_students, @current_filters)
     @current_data = filtered_students
     sort_current_data
   end
   
   def filter_students(students, filters)
-    return students unless filters
+    return students unless filters && !filters.empty?
     
     students.select do |student|
       fio_match = true
@@ -232,8 +255,6 @@ class StudentController
   end
   
   def show_student_dialog(student = nil, &on_save)
-    require_relative '../views/dialogs/student_dialog'
-    
     title = student ? "Редактирование студента" : "Добавление студента"
     dialog = StudentDialog.new(@view, student, title)
     
@@ -243,7 +264,10 @@ class StudentController
     end
   end
   
-  def edit_student_dialog(student)
+  def edit_student_dialog(student_id)
+    student = find_student_in_current_data(student_id)
+    return unless student
+    
     show_student_dialog(student) do |student_data|
       if student_data
         update_and_save_student(student, student_data)
@@ -267,9 +291,9 @@ class StudentController
       telegram: student_data[:telegram]
     )
     
-    @model.add_student(new_student)
-    @model.save_data
-    apply_filters
+    @student_list.add_student(new_student)
+    @student_list.save_data
+    apply_filters(@current_filters)
     info_dialog("Успех", "Студент добавлен успешно!")
   end
   
@@ -286,9 +310,9 @@ class StudentController
       telegram: student_data[:telegram]
     )
     
-    if @model.replace_student_by_id(old_student.id, updated_student)
-      @model.save_data
-      apply_filters
+    if @student_list.replace_student_by_id(old_student.id, updated_student)
+      @student_list.save_data
+      apply_filters(@current_filters)
       info_dialog("Успех", "Студент обновлен успешно!")
     else
       error_dialog("Ошибка", "Не удалось обновить студента")

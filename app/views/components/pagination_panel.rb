@@ -1,11 +1,14 @@
 # app/views/components/pagination_panel.rb
 require 'fox16'
 include Fox
+require_relative '../../core/observable'
 
 class PaginationPanel < FXHorizontalFrame
+  include Observable
+  
   attr_reader :current_page, :total_pages, :items_per_page
   
-  def initialize(parent, controller)
+  def initialize(parent, controller = nil)
     super(parent, LAYOUT_FILL_X | PACK_UNIFORM_WIDTH)
     
     @controller = controller
@@ -26,14 +29,6 @@ class PaginationPanel < FXHorizontalFrame
     @current_page = 1 if @current_page > @total_pages
     
     update_display
-  end
-  
-  def next_page
-    change_page(@current_page + 1) if @current_page < @total_pages
-  end
-  
-  def prev_page
-    change_page(@current_page - 1) if @current_page > 1
   end
   
   private
@@ -58,7 +53,6 @@ class PaginationPanel < FXHorizontalFrame
   def update_display
     @page_label.text = "Страница #{@current_page} из #{@total_pages}"
     
-    # Правильные методы в FXRuby
     if @current_page > 1
       @prev_btn.enable
     else
@@ -72,9 +66,17 @@ class PaginationPanel < FXHorizontalFrame
     end
   end
   
+  def next_page
+    change_page(@current_page + 1) if @current_page < @total_pages
+  end
+  
+  def prev_page
+    change_page(@current_page - 1) if @current_page > 1
+  end
+  
   def change_page(new_page)
     @current_page = new_page
     update_display
-    @controller.on_page_changed(@current_page) if @controller.respond_to?(:on_page_changed)
+    notify_observers(:page_changed, @current_page)
   end
 end

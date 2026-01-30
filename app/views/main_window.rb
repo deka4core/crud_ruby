@@ -2,6 +2,7 @@
 require 'fox16'
 include Fox
 require 'fileutils'
+require_relative '../core/observable'
 
 require_relative '../models/student_list_json'
 require_relative '../controllers/student_controller'
@@ -10,6 +11,8 @@ require_relative 'components/filter_panel'
 require_relative 'components/pagination_panel'
 
 class MainWindow < FXMainWindow
+  include Observable
+  
   attr_reader :student_list, :student_table, :controller, 
               :filter_panel, :pagination_panel
   
@@ -17,22 +20,32 @@ class MainWindow < FXMainWindow
     super(app, "Управление студентами", width: 1400, height: 900)
     
     initialize_student_list
-    setup_controllers
     setup_ui
+    setup_controllers
     setup_event_handlers
-    refresh_table
   end
   
   def create
     super
     show(PLACEMENT_SCREEN)
-    @controller.apply_filters
+    notify_observers(:view_ready)
   end
   
-  def refresh_table
-    @controller.apply_filters if @controller
+  # Метод наблюдателя для обработки событий от компонентов
+  def on_observable_event(event_type, data = nil, observable = nil)
+    case event_type
+    when :selection_changed
+      notify_observers(:selection_changed, data)
+    when :student_double_clicked
+      notify_observers(:student_double_clicked, data)
+    when :page_changed
+      notify_observers(:page_changed, data)
+    when :sort_column
+      notify_observers(:sort_column, data)
+    end
   end
   
+  # Методы для контроллера
   def update_buttons_state(selected_count)
     return unless @edit_btn && @delete_btn
     
@@ -60,6 +73,14 @@ class MainWindow < FXMainWindow
     if @count_label
       @count_label.text = "Всего: #{total_count}"
     end
+  end
+  
+  def table
+    @student_table
+  end
+
+  def pagination
+    @pagination
   end
   
   private
@@ -104,7 +125,7 @@ class MainWindow < FXMainWindow
     reset_btn = FXButton.new(reset_frame, "Сбросить фильтры")
     reset_btn.connect(SEL_COMMAND) do
       @filter_panel.reset
-      @controller.apply_filters
+      notify_observers(:reset_filters)
     end
   end
   
@@ -131,7 +152,10 @@ class MainWindow < FXMainWindow
     
     FXTabItem.new(@tab_book, "Студенты", nil)
     students_frame = FXVerticalFrame.new(@tab_book, LAYOUT_FILL_X | LAYOUT_FILL_Y)
-    @student_table = StudentTable.new(students_frame, @controller)
+    
+    # Создаем таблицу и регистрируем MainWindow как наблюдатель
+    @student_table = StudentTable.new(students_frame)
+    @student_table.add_observer(self)
     
     FXTabItem.new(@tab_book, "Вкладка 2", nil)
     tab2_frame = FXVerticalFrame.new(@tab_book, LAYOUT_FILL_X | LAYOUT_FILL_Y)
@@ -145,14 +169,18 @@ class MainWindow < FXMainWindow
   end
   
   def setup_pagination_panel(parent)
-    @pagination = PaginationPanel.new(parent, @controller)
+    @pagination = PaginationPanel.new(parent)
+    @pagination.add_observer(self)
   end
   
   def setup_event_handlers
     @add_btn.connect(SEL_COMMAND) { @controller.add_student }
     @edit_btn.connect(SEL_COMMAND) { @controller.edit_student }
     @delete_btn.connect(SEL_COMMAND) { @controller.delete_students }
-    @refresh_btn.connect(SEL_COMMAND) { @controller.apply_filters }
+    @refresh_btn.connect(SEL_COMMAND) do
+      filters = @filter_panel.get_filters
+      notify_observers(:apply_filters, filters)
+    end
     
     self.connect(SEL_CLOSE) do
       @student_list.save_data
@@ -161,131 +189,99 @@ class MainWindow < FXMainWindow
   end
   
   def add_test_students
-  require_relative '../models/student'
-  
-  test_students = []
-  
-  # Массивы для генерации - УЧИТЫВАЕМ valid_name? (только первая буква заглавная)
-  first_names = ["Иван", "Петр", "Мария", "Анна", "Сергей", "Ольга", "Алексей", "Екатерина", "Дмитрий", "Наталья"]
-  last_names = ["Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов", "Попов", "Васильев", "Новиков", "Федоров", "Морозов"]
-  patronymics = ["Иванович", "Петрович", "Сергеевич", "Александрович", "Дмитриевич", 
-                 "Алексеевна", "Сергеевна", "Александровна", "Дмитриевна", "Владимировна"]
-  
-  # Генерируем 45 студентов
-  45.times do |i|
-    first_name = first_names[i % first_names.size]
-    last_name = last_names[i % last_names.size]
-    patronymic = patronymics[i % patronymics.size]
+    require_relative '../models/student'
     
-    # Git - УЧИТЫВАЕМ valid_git? (только github.com или gitlab.com)
-    git = case i % 4
-          when 0 then "https://github.com/user#{i}"
-          when 1 then "https://gitlab.com/dev#{i}"
-          when 2 then nil
-          else "https://github.com/projects/repo#{i}"  # С подпапкой
-          end
+    test_students = []
     
-    # Email - УЧИТЫВАЕМ valid_email?
-    email = case i % 5
-            when 0 then "student#{i}@mail.ru"
-            when 1 then "user#{i}@gmail.com"
-            when 2 then "test#{i}@yandex.ru"
-            else nil
+    first_names = ["Иван", "Петр", "Мария", "Анна", "Сергей", "Ольга", "Алексей", "Екатерина", "Дмитрий", "Наталья"]
+    last_names = ["Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов", "Попов", "Васильев", "Новиков", "Федоров", "Морозов"]
+    patronymics = ["Иванович", "Петрович", "Сергеевич", "Александрович", "Дмитриевич", 
+                   "Алексеевна", "Сергеевна", "Александровна", "Дмитриевна", "Владимировна"]
+    
+    45.times do |i|
+      first_name = first_names[i % first_names.size]
+      last_name = last_names[i % last_names.size]
+      patronymic = patronymics[i % patronymics.size]
+      
+      git = case i % 4
+            when 0 then "https://github.com/user#{i}"
+            when 1 then "https://gitlab.com/dev#{i}"
+            when 2 then nil
+            else "https://github.com/projects/repo#{i}"
             end
+      
+      email = case i % 5
+              when 0 then "student#{i}@mail.ru"
+              when 1 then "user#{i}@gmail.com"
+              when 2 then "test#{i}@yandex.ru"
+              else nil
+              end
+      
+      phone = case i % 6
+              when 0 then "+79161234567"
+              when 1 then "89161234567"
+              when 2 then "+7 916 123-45-67"
+              when 3 then "8(916)123-45-67"
+              when 4 then "+7-916-123-45-67"
+              else nil
+              end
+      
+      telegram = case i % 7
+                 when 0 then "@student#{i.to_s.rjust(5, '0')[0,5]}"
+                 when 1 then "@dev#{i.to_s.rjust(5, '0')[0,5]}"
+                 when 2 then "@coder#{i.to_s.rjust(4, '0')[0,4]}"
+                 else nil
+                 end
+      
+      begin
+        test_students << Student.new(
+          first_name: first_name,
+          last_name: last_name,
+          patronymic: patronymic,
+          git: git,
+          email: email,
+          phone: phone,
+          telegram: telegram
+        )
+      rescue => e
+        puts "❌ Ошибка при создании студента #{i+1}: #{e.message}"
+      end
+    end
     
-    # Phone - КРИТИЧНО! УЧИТЫВАЕМ valid_phone?:
-    # ^(\+7|8)[\s\(\-]?\d{3}[\s\)\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$
-    # Формат: (+7|8) + 3 цифры + 3 цифры + 2 цифры + 2 цифры
-    # Всего: 1(+7) или 1(8) + 10 цифр = 11-12 символов
-    phone = case i % 6
-            when 0 then "+79161234567"      # Без разделителей: +7 916 123-45-67
-            when 1 then "89161234567"       # Без разделителей: 8 916 123-45-67
-            when 2 then "+7 916 123-45-67"  # С пробелами и дефисами
-            when 3 then "8(916)123-45-67"   # Со скобками и дефисами
-            when 4 then "+7-916-123-45-67"  # Только дефисы
-            else nil  # Нет телефона
-            end
-    
-    # Telegram - УЧИТЫВАЕМ valid_telegram? (^@[a-zA-Z0-9_]{5,}$)
-    telegram = case i % 7
-               when 0 then "@student#{i.to_s.rjust(5, '0')[0,5]}"  # @student00000 - @student00044
-               when 1 then "@dev#{i.to_s.rjust(5, '0')[0,5]}"      # @dev00000 - @dev00044
-               when 2 then "@coder#{i.to_s.rjust(4, '0')[0,4]}"    # @coder0000 - @coder0044
-               else nil
-               end
-    
-    # Создаем студента
     begin
       test_students << Student.new(
-        first_name: first_name,
-        last_name: last_name,
-        patronymic: patronymic,
-        git: git,
-        email: email,
-        phone: phone,
-        telegram: telegram
+        first_name: "Без",
+        last_name: "Контактов", 
+        patronymic: "Никаких",
+        git: nil,
+        email: nil,
+        phone: nil,
+        telegram: nil
       )
-      puts "✅ Создан студент #{i+1}: #{last_name} #{first_name[0]}."
+      
+      test_students << Student.new(
+        first_name: "Со",
+        last_name: "Всемиконтактами",
+        patronymic: "Всеволод",
+        git: "https://github.com/fullstack/project",
+        email: "full@example.com",
+        phone: "+7 916 123-45-67",
+        telegram: "@fullcontact123"
+      )
+      
+      test_students << Student.new(
+        first_name: "Поиск",
+        last_name: "Тестовый",
+        patronymic: "Искомый", 
+        git: "https://gitlab.com/search/test",
+        email: "search@test.ru",
+        phone: "8(916)999-88-77",
+        telegram: "@searchme56789"
+      )
     rescue => e
-      puts "❌ Ошибка при создании студента #{i+1}: #{e.message}"
-      puts "   Параметры: phone='#{phone}', telegram='#{telegram}'"
+      puts "❌ Ошибка в специальных кейсах: #{e.message}"
     end
-  end
-  
-  # Специальные кейсы
-  begin
-    # 1. Без контактов
-    test_students << Student.new(
-      first_name: "Без",
-      last_name: "Контактов", 
-      patronymic: "Никаких",
-      git: nil,
-      email: nil,
-      phone: nil,
-      telegram: nil
-    )
-    puts "✅ Создан студент 'Без Контактов'"
     
-    # 2. Со всеми контактами (ИДЕАЛЬНЫЕ ФОРМАТЫ)
-    test_students << Student.new(
-      first_name: "Со",
-      last_name: "Всемиконтактами",  # Исправлено: первая заглавная, остальные строчные
-      patronymic: "Всеволод",
-      git: "https://github.com/fullstack/project",
-      email: "full@example.com",
-      phone: "+7 916 123-45-67",  # Идеальный формат с пробелами и дефисами
-      telegram: "@fullcontact123"  # 13 символов после @
-    )
-    puts "✅ Создан студент 'Со Всемиконтактами'"
-    
-    # 3. Для поиска
-    test_students << Student.new(
-      first_name: "Поиск",
-      last_name: "Тестовый",
-      patronymic: "Искомый", 
-      git: "https://gitlab.com/search/test",
-      email: "search@test.ru",
-      phone: "8(916)999-88-77",  # Другой валидный формат
-      telegram: "@searchme56789"  # 11 символов после @
-    )
-    puts "✅ Создан студент 'Поиск Тестовый'"
-  rescue => e
-    puts "❌ Ошибка в специальных кейсах: #{e.message}"
-  end
-  
-  puts "\n📊 Итого: создано #{test_students.size} студентов"
-  
-  # Добавляем
-  test_students.each { |student| @student_list.add_student(student) }
-  
-  test_students.size
-end
-  
-  def table
-    @student_table
-  end
-
-  def pagination
-    @pagination
+    test_students.each { |student| @student_list.add_student(student) }
   end
 end
