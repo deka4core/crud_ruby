@@ -22,7 +22,7 @@ class StudentsListJSON
     
     # Фильтры и сортировка
     @filters = {}
-    @sort_column = 1 # По ФИО по умолчанию
+    @sort_column = 0 # По ID по умолчанию
     @sort_direction = :asc
     @filter = StudentFilter.new if defined?(StudentFilter)
     @filtered_students = []
@@ -70,7 +70,7 @@ class StudentsListJSON
     reload_filtered_data
     
     start_index = (k - 1) * n
-    end_index = start_index + n - 1
+    end_index = start_index + n
     
     puts "Индекс начала: #{start_index}, конец: #{end_index}"
     puts "Всего отфильтрованных: #{@filtered_students.size}"
@@ -274,9 +274,18 @@ end
     notify_observers(:filters_updated)  # Добавьте эту строку!
   end
 
-  def update_sort(column_index, direction = :asc)
-    @sort_column = column_index
-    @sort_direction = direction
+  def update_sort(column_index, direction = nil)
+    # Если кликнули на тот же столбец - меняем направление
+    if @sort_column == column_index
+      @sort_direction = (@sort_direction == :asc) ? :desc : :asc
+    else
+      # Если новый столбец - сортируем по возрастанию
+      @sort_column = column_index
+      @sort_direction = :asc
+    end
+    
+    # Применяем направление, если оно явно указано
+    @sort_direction = direction if direction
     
     sort_filtered_data
     notify_observers(:sort_updated)
@@ -290,18 +299,12 @@ end
     case @sort_column
     when 0 # ID
       @filtered_students.sort_by!(&:id)
-    when 1 # ФИО
+    when 1 # ФИО (last_name_initials)
       @filtered_students.sort_by! { |s| s.last_name_initials.to_s.downcase }
-    when 2 # Git
-      @filtered_students.sort_by! do |s| 
-        git = s.git.to_s
-        [git.empty? ? 1 : 0, git.downcase]
-      end
-    when 3 # Контакт
-      @filtered_students.sort_by! do |s| 
-        contact = s.contact.to_s
-        [contact.empty? ? 1 : 0, contact.downcase]
-      end
+    # Столбцы 2 и 3 (Git и Контакт) не сортируем
+    else
+      # По умолчанию сортируем по ID
+      @filtered_students.sort_by!(&:id)
     end
     
     @filtered_students.reverse! if @sort_direction == :desc

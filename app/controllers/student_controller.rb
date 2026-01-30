@@ -74,8 +74,9 @@ class StudentController
   end
 
   def sort_by_column(column_index)
-    if @model.respond_to?(:update_sort)
-      @model.update_sort(column_index, :asc)
+    # Проверяем, что сортировка разрешена только для ID и ФИО
+    if column_index == 0 || column_index == 1
+      @model.update_sort(column_index) if @model.respond_to?(:update_sort)
     end
   end
   

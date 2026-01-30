@@ -1,12 +1,13 @@
 # app/views/student_list_view.rb
-
-require_relative "../core/observer.rb"
+require 'fox16'
+include Fox
+require_relative '../core/observer'
 
 class StudentListView < FXVerticalFrame
   include Observer
   
   attr_accessor :controller
-  attr_reader :table, :model
+  attr_reader :table, :model, :columnHeader
   
   def initialize(parent, controller = nil)
     super(parent, LAYOUT_FILL_X | LAYOUT_FILL_Y)
@@ -14,7 +15,10 @@ class StudentListView < FXVerticalFrame
     @controller = controller
     @model = nil
     @selected_ids = []
+    @columnHeader = nil
+    @rowHeader = nil
     
+    puts "Создание StudentListView..."
     setup_ui
   end
   
@@ -28,7 +32,7 @@ class StudentListView < FXVerticalFrame
   def on_observable_event(event_type, data = nil)
     case event_type
     when :student_added, :student_deleted, :student_updated, 
-         :page_changed, :filters_updated, :sort_updated  # Добавьте события!
+         :page_changed, :filters_updated, :sort_updated
       update_view
       update_buttons_state
     end
@@ -37,21 +41,30 @@ class StudentListView < FXVerticalFrame
   def update_view
     return unless @model
     
+    # Обновляем заголовки
+    update_column_headers
+    
     # Получаем данные для текущей страницы
     students_short = @model.get_k_n_student_short_list(@model.current_page, @model.items_per_page)
     
     # Обновляем таблицу
     @table.clearItems if @table.numRows > 0
     @table.setTableSize(students_short.size, 4)
+
+    @table.setColumnText(0, "ID")
+    @table.setColumnText(1, "Фамилия И.О.")
+    @table.setColumnText(2, "Git")
+    @table.setColumnText(3, "Контакт")
     
     students_short.each_with_index do |student, index|
+      @table.setRowText(index, (((@model.current_page - 1) * @model.items_per_page) + index + 1).to_s)
       @table.setItemText(index, 0, student.id.to_s)
       @table.setItemText(index, 1, student.last_name_initials || "")
       @table.setItemText(index, 2, student.git || "")
       @table.setItemText(index, 3, student.contact || "")
     end
     
-    # Обновляем информацию о пагинации
+    # Обновляем пагинацию
     update_pagination_info
   end
   
@@ -90,6 +103,16 @@ class StudentListView < FXVerticalFrame
     end
   end
   
+  def sort_by_column(column_index)
+    if @controller && @controller.respond_to?(:sort_by_column)
+      @controller.sort_by_column(column_index)
+    end
+  end
+  
+  def set_controller(controller)
+    @controller = controller
+  end
+  
   private
   
   def setup_ui
@@ -116,41 +139,117 @@ class StudentListView < FXVerticalFrame
     table_frame = FXVerticalFrame.new(self, LAYOUT_FILL_X | LAYOUT_FILL_Y, padding: 5)
     @table = FXTable.new(table_frame, 
       nil, 0, 
-      TABLE_READONLY | LAYOUT_FILL_X | LAYOUT_FILL_Y | TABLE_COL_SIZABLE | TABLE_NO_COLSELECT)
+      TABLE_READONLY | LAYOUT_FILL_X | LAYOUT_FILL_Y | TABLE_COL_SIZABLE)
     
     setup_table
-    
-    # Назначение обработчиков
     setup_event_handlers
   end
   
   def setup_table
+    # Устанавливаем размер таблицы
     @table.setTableSize(0, 4)
     
-    # Заголовки столбцов с поддержкой сортировки
+    # Устанавливаем заголовки колонок
     @table.setColumnText(0, "ID")
     @table.setColumnText(1, "Фамилия И.О.")
     @table.setColumnText(2, "Git")
     @table.setColumnText(3, "Контакт")
     
-    # Ширина столбцов
+    # Устанавливаем ширину колонок
     @table.setColumnWidth(0, 60)
     @table.setColumnWidth(1, 250)
     @table.setColumnWidth(2, 200)
     @table.setColumnWidth(3, 200)
     
-    # Клик по заголовку для сортировки
-    @table.columnHeader.connect(SEL_COMMAND) do |sender, sel, column_index|
-      sort_by_column(column_index)
+    # 1. Верхние заголовки - сортировка (ТОЧНО как у вас!)
+    @columnHeader = @table.columnHeader
+    
+    # Отладка
+    puts "Заголовок колонок: #{@columnHeader ? 'есть' : 'нет'}"
+    puts "Колонок в заголовке: #{@columnHeader.numItems if @columnHeader}"
+    
+    @columnHeader.connect(SEL_COMMAND) do |sender, sel, index|
+      puts "Клик по заголовку колонки: #{index}"
+      
+      # Разрешаем сортировку только по ID (0) и ФИО (1)
+      if index == 0 || index == 1
+        if @controller && @controller.respond_to?(:sort_by_column)
+          @controller.sort_by_column(index)
+        else
+          puts "Контроллер не доступен для сортировки"
+        end
+      else
+        puts "Сортировка по колонке #{index} недоступна"
+      end
+    end
+    
+    # 2. ЛЕВЫЕ заголовки - выделение (опционально)
+    # @rowHeader = @table.rowHeader
+    # @rowHeader.connect(SEL_COMMAND) do |sender, sel, index|
+    #   @table.killSelection
+    #   @table.selectRow(index, true)
+    #   update_buttons_state
+    # end
+    
+    # Обновляем заголовки сразу
+    update_column_headers
+  end
+  
+  def setup_column_click_handler
+    # Подключаем обработчик команд заголовков колонок
+    @table.connect(Fox::SEL_COMMAND, Fox::FXTable::ID_COLUMN_HEADER) do |sender, sel, ptr|
+      # ptr - это указатель на FXEvent, нужно получить индекс колонки
+      event = Fox::FXEvent.ptr(ptr)
+      
+      if event
+        # Получаем координаты клика
+        column_index = @table.getColumnAtX(event.win_x)
+        
+        puts "Клик по заголовку колонки: #{column_index}"
+        
+        # Разрешаем сортировку только по ID (0) и ФИО (1)
+        if column_index == 0 || column_index == 1
+          sort_by_column(column_index)
+        else
+          puts "Сортировка по столбцу #{column_index} недоступна"
+        end
+      end
     end
   end
   
-  def sort_by_column(column_index)
-    if @controller && @controller.respond_to?(:sort_by_column)
-      @controller.sort_by_column(column_index)
+  def update_column_headers
+    return unless @model && @columnHeader
+    
+    puts "Обновление заголовков. Текущая сортировка: колонка=#{@model.sort_column}, направление=#{@model.sort_direction}"
+    
+    # Базовые названия колонок
+    column_names = ["ID", "Фамилия И.О.", "Git", "Контакт"]
+    
+    # Добавляем стрелочку для текущей колонки сортировки
+    if @model.sort_column == 0 || @model.sort_column == 1
+      arrow = (@model.sort_direction == :asc) ? " ▲" : " ▼"
+      column_names[@model.sort_column] += arrow
+      
+      # Устанавливаем стрелку через API FXHeader
+      arrow_dir = (@model.sort_direction == :asc) ? Fox::TRUE : Fox::FALSE
+      @columnHeader.setArrowDir(@model.sort_column, arrow_dir)
     end
+    
+    # Сбрасываем стрелки для других колонок
+    (0..3).each do |index|
+      if index != @model.sort_column && (index == 0 || index == 1)
+        @columnHeader.setArrowDir(index, Fox::MAYBE)
+      end
+    end
+    
+    # Устанавливаем текст заголовков
+    column_names.each_with_index do |name, index|
+      @table.setColumnText(index, name)
+    end
+    
+    puts "Заголовки обновлены"
   end
-  
+    
   def setup_event_handlers
     # Кнопки управления
     @add_button.connect(SEL_COMMAND) do
@@ -202,33 +301,6 @@ class StudentListView < FXVerticalFrame
         @controller.edit_student(selected_ids.first)
       end
     end
-
-    @table.connect(SEL_RIGHTBUTTONPRESS) do
-      show_context_menu
-    end
-  end
-
-  def show_context_menu
-    menu = FXMenuPane.new(self)
-    
-    FXMenuCommand.new(menu, "Добавить студента").connect(SEL_COMMAND) do
-      @controller.add_student if @controller
-    end
-    
-    FXMenuSeparator.new(menu)
-    
-    FXMenuCommand.new(menu, "Изменить").connect(SEL_COMMAND) do
-      selected_ids = get_selected_student_ids
-      @controller.edit_student(selected_ids.first) if selected_ids.size == 1
-    end
-    
-    FXMenuCommand.new(menu, "Удалить").connect(SEL_COMMAND) do
-      selected_ids = get_selected_student_ids
-      @controller.delete_students(selected_ids) if selected_ids.any?
-    end
-    
-    menu.create
-    menu.popup(nil, app.cursorX, app.cursorY)
   end
   
   def update_pagination_info
@@ -238,7 +310,17 @@ class StudentListView < FXVerticalFrame
     current = @model.current_page
     total_pages = @model.total_pages
     
-    @page_label.text = "Страница #{current} из #{total_pages} | Всего: #{total}"
+    # Добавляем информацию о сортировке
+    sort_info = ""
+    if @model.sort_column == 0
+      direction = @model.sort_direction == :asc ? "↑" : "↓"
+      sort_info = " | Сортировка: ID #{direction}"
+    elsif @model.sort_column == 1
+      direction = @model.sort_direction == :asc ? "↑" : "↓"
+      sort_info = " | Сортировка: ФИО #{direction}"
+    end
+    
+    @page_label.text = "Страница #{current} из #{total_pages} | Всего: #{total}#{sort_info}"
     
     @prev_button.enabled = (current > 1)
     @next_button.enabled = (current < total_pages)
