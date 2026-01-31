@@ -60,27 +60,42 @@ class StudentsListJSON
     end
   end
   
-  def get_k_n_student_short_list(k, n)
-    start_index = (k - 1) * n
-    end_index = start_index + n - 1
-    
-    # Проверяем границы
-    start_index = 0 if start_index < 0
-    end_index = @students.size - 1 if end_index >= @students.size
-    
-    page_students = @students[start_index..end_index] || []
-    
-    puts "get_k_n_student_short_list: k=#{k}, n=#{n}"
-    puts "Диапазон: #{start_index}..#{end_index}"
-    puts "Всего студентов: #{@students.size}"
-    puts "Возвращается: #{page_students.size}"
-    
-    page_students
+  # app/models/student_list_json.rb
+# app/models/student_list_json.rb (добавь этот метод)
+def get_k_n_student_short_list(k, n)
+  puts "get_k_n_student_short_list: запрошена страница #{k}, #{n} элементов"
+  puts "Всего студентов в памяти: #{@students.size}"
+  
+  # Если n очень большое или 0, возвращаем всех
+  if n <= 0 || n >= @students.size
+    puts "Запрошены все студенты или неверный n, возвращаем всех"
+    return @students.dup
   end
   
-  def get_student_short_count
-    count = @students.size
-    puts "get_student_short_count: #{count}"
-    count
+  # Рассчитываем индексы
+  start_index = (k - 1) * n
+  end_index = start_index + n - 1
+  
+  # Проверяем границы
+  if start_index >= @students.size
+    puts "Начальный индекс #{start_index} за пределами, возвращаем пустой список"
+    return []
   end
+  
+  # Корректируем конечный индекс
+  end_index = @students.size - 1 if end_index >= @students.size
+  
+  puts "Диапазон: #{start_index}..#{end_index}"
+  
+  result = @students[start_index..end_index] || []
+  puts "Возвращается: #{result.size} студентов"
+  
+  result
+end
+
+def get_student_short_count
+  count = @students.size
+  puts "get_student_short_count: #{count}"
+  count
+end
 end
