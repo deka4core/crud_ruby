@@ -1,4 +1,3 @@
-# app/models/student_filter.rb
 class StudentFilter
   def apply_filters(students, filters)
     return students unless filters && !filters.empty?
@@ -13,19 +12,16 @@ class StudentFilter
   private
   
   def matches_all_filters?(student, filters)
-    # Фильтр по ФИО
     if filters[:fio] && !filters[:fio].empty?
       fio_text = filters[:fio].downcase
       student_fio = student.last_name_initials.to_s.downcase
       return false unless student_fio.include?(fio_text)
     end
     
-    # Фильтр по Git
     if filters[:git]
       return false unless matches_git_filter?(student, filters[:git])
     end
     
-    # Фильтр по контакту
     if filters[:contact]
       return false unless matches_contact_filter?(student, filters[:contact])
     end
@@ -40,7 +36,6 @@ class StudentFilter
     when :present
       return false unless has_git
       
-      # Если есть текст для поиска в Git
       if git_filter[:text] && !git_filter[:text].empty?
         git_text = git_filter[:text].downcase
         student_git = student.git.to_s.downcase
@@ -51,7 +46,6 @@ class StudentFilter
       return false if has_git
       
     when :any
-      # Не важно, пропускаем
     end
     
     true
@@ -66,7 +60,6 @@ class StudentFilter
     when :absent
       return false if has_contact
     when :any
-      # Не важно, пропускаем
     end
     
     true

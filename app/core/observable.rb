@@ -1,4 +1,3 @@
-# app/core/observable.rb
 module Observable
   def observers
     @observers ||= []

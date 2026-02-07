@@ -29,10 +29,10 @@ class DataList
     ["№ по порядку"] + column_names
   end
   
-  def get_data
+  def get_data(start_index=0)
     rows = []
     @data.each_with_index do |item, index|
-      rows << [index + 1] + row_values(item)
+      rows << [index + 1 + start_index] + row_values(item)
     end
     DataTable.new(rows)
   end
